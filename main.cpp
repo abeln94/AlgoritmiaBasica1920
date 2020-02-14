@@ -2,6 +2,9 @@
 #include <random>
 #include <algorithm>
 #include <cassert>
+#include <array>
+#include <chrono>
+#include <fstream>
 
 using namespace std;
 
@@ -70,6 +73,13 @@ void sortByRadix(int array[], int n, int digits) {
 
 #define COUT_VECTOR(v, n) cout << "["; for (int i = 0; i < n; ++i) cout << (i != 0 ? ", " : "") << v[i]; cout << "]" << endl;
 
+#define MEASURE(variable, code) {                                                      \
+    auto start = chrono::high_resolution_clock::now();                                 \
+    code                                                                               \
+    auto end = chrono::high_resolution_clock::now();                                   \
+    variable += chrono::duration_cast<chrono::microseconds>(end - start).count();      \
+}
+
 int main() {
 
 #ifdef USING_DEBUG
@@ -78,24 +88,47 @@ int main() {
     cout << "############################" << endl;
 #endif
 
+    ofstream output;
+    output.open("output.csv");
+
     // define
-    int N = 100;
-    int D = 6;
+    int D = 9; // <=9
+    int REPEAT = 10;
 
-    // generate random vector
-    int vector[N];
-    for (int i = 0; i < N; ++i) {
-        vector[i] = getRandomNumber(D);
-    }
-    COUT_VECTOR(vector, N);
+    for (int N = 20000; N <= 200000; N += 2000) {
+        cout << "\rN=" << N << flush;
+        int time_our = 0;
+        int time_std = 0;
+        for (int t = 0; t < REPEAT; ++t) {
 
-    // sort
-    sortByRadix(vector, N, D);
-    COUT_VECTOR(vector, N);
+            // generate random vector
+            int data_our[N], data_std[N];
+            for (int i = 0; i < N; ++i) {
+                data_our[i] = data_std[i] = getRandomNumber(D);
+            }
+//        COUT_VECTOR(vector, N);
 
-    // check
-    for (int i = 0; i < N - 1; ++i) {
-        assert(vector[i] <= vector[i + 1]);
+            // sort
+            MEASURE(time_our, {
+                sortByRadix(data_our, N, D);
+            })
+
+            MEASURE(time_std, {
+                sort(data_std, data_std + N);
+            })
+
+//        COUT_VECTOR(vector, N);
+
+            // check
+            for (int i = 0; i < N - 1; ++i) {
+                assert(data_our[i] <= data_our[i + 1]);
+                assert(data_std[i] <= data_std[i + 1]);
+            }
+        }
+
+        time_our /= REPEAT;
+        time_std /= REPEAT;
+        output << N << " " << time_our << " " << time_std << endl;
     }
 
     return 0;
