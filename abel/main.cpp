@@ -1,22 +1,31 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
-#include <cassert>
 #include <array>
 #include <chrono>
 #include <fstream>
+#include <functional>
 
 using namespace std;
 
 #define BASE 10
 
-#define DIGITS 6 // <=9
+#define DIGITS 9 // <=9
 
-// -------------------- integer as digits --------------------
+// -------------------- INTEGER --------------------
 
+/**
+ * Struct for integers saved as digits
+ */
 struct int_digit {
-    int digits[DIGITS];
+    /**
+     * The digits
+     */
+    char digits[DIGITS];
 
+    /**
+     * @return the corresponding int
+     */
     int as_int() const {
         int i = 0;
         for (int d = DIGITS - 1; d >= 0; --d) {
@@ -25,18 +34,29 @@ struct int_digit {
         return i;
     }
 
-    int &operator[](int d) {
+    /**
+     * For assignment/access
+     */
+    char &operator[](int d) {
         return digits[d];
     }
 
-    int_digit &operator=(int_digit &other) {
+    /**
+     * For copy
+     */
+    int_digit &operator=(int_digit const &rhs) {
+//        if(&rhs != this) { // slower
         for (int d = 0; d < DIGITS; ++d) {
-            digits[d] = other[d];
+            digits[d] = rhs.digits[d];
         }
+//        }
         return *this;
     }
 };
 
+/**
+ * For print
+ */
 ostream &operator<<(ostream &o, int_digit i) {
     o << i.as_int();
     return o;
@@ -47,7 +67,12 @@ ostream &operator<<(ostream &o, int_digit i) {
 static random_device rd;
 static mt19937 generator(rd());
 
-void getRandomNumber(int &as_int, int_digit &as_int_digit) {
+/**
+ * Generates a random number of DIGITS digits
+ * @param as_int the number saved as int (output)
+ * @param as_int_digit the number saved as int_digit (output)
+ */
+void generateRandomNumber(int &as_int, int_digit &as_int_digit) {
     for (int d = 0; d < DIGITS; ++d) {
         as_int_digit[d] = uniform_int_distribution<>(0, BASE - 1)(generator);
     }
@@ -55,9 +80,6 @@ void getRandomNumber(int &as_int, int_digit &as_int_digit) {
 }
 
 // -------------------- SORT --------------------
-
-#define SWAP(v, a, b) auto temp = v[a]; v[a]=v[b]; v[b]=temp
-
 
 /**
  * Sorts the array based on the specified digit of the numbers.
@@ -106,16 +128,40 @@ void sortByRadix(int_digit array[], int n) {
     }
 }
 
-// -------------------- MAIN --------------------
+// -------------------- MEASURE --------------------
 
-#define COUT_VECTOR(v, n) cout << "["; for (int i = 0; i < n; ++i) cout << (i != 0 ? ", " : "") << v[i]; cout << "]" << endl
+/**
+ * Measures time of execution of code
+ * @param action code to execute and measure
+ * @return the time it took as microseconds
+ */
+int Measure(const function<void()> &action) {
+    if (action == nullptr) return 0;
 
-#define MEASURE(variable, code) {                                                      \
-    auto start = chrono::high_resolution_clock::now();                                 \
-    code                                                                               \
-    auto end = chrono::high_resolution_clock::now();                                   \
-    variable += chrono::duration_cast<chrono::microseconds>(end - start).count();      \
+    auto start = chrono::high_resolution_clock::now();
+    action();
+    auto end = chrono::high_resolution_clock::now();
+
+    return chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
+
+// -------------------- UTILS --------------------
+
+/**
+ * Pretty print an array (why this isn't on the std?)
+ * @tparam T type of elements in the array
+ * @param v array
+ * @param n size of array
+ */
+template<class T>
+void print(T v[], int n) {
+    cout << "[";
+    for (int i = 0; i < n; ++i)
+        cout << (i != 0 ? ", " : "") << v[i];
+    cout << "]" << endl;
+}
+
+// -------------------- MAIN --------------------
 
 int main() {
 
@@ -141,31 +187,31 @@ int main() {
             int data_std[N];
             int_digit data_our[N];
             for (int i = 0; i < N; ++i) {
-                getRandomNumber(data_std[i], data_our[i]);
+                generateRandomNumber(data_std[i], data_our[i]);
             }
-//        COUT_VECTOR(vector, N);
+//        print(data_std, N);
 
             // sort
-            MEASURE(time_our, {
+            time_our += Measure([&data_our, N] {
                 sortByRadix(data_our, N);
-            })
+            });
 
-            MEASURE(time_std, {
+            time_std += Measure([&data_std, N] {
                 sort(data_std, data_std + N);
-            })
+            });
 
-//        COUT_VECTOR(vector, N);
+//        print(data_std, N);
 
             // check
             for (int i = 0; i < N - 1; ++i) {
                 if (data_our[i].as_int() > data_our[i + 1].as_int()) {
-                    cout << "data_our not sorted";
-                    COUT_VECTOR(data_our, N);
+                    cout << "data_our not sorted: ";
+                    print(data_our, N);
                     return -1;
                 }
                 if (data_std[i] > data_std[i + 1]) {
-                    cout << "data_std not sorted";
-                    COUT_VECTOR(data_std, N);
+                    cout << "data_std not sorted: ";
+                    print(data_std, N);
                     return -1;
                 }
             }
