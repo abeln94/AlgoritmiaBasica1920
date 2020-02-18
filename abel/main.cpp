@@ -24,9 +24,9 @@ int getRandomNumber(int digits) {
 #define SWAP(v, a, b) auto temp = v[a]; v[a]=v[b]; v[b]=temp
 
 #if (BASE & (BASE-1)) == 0
-    #define DIGIT(n, d) (((n) >> (d * ((int)log2(BASE))) ) % BASE)
+#define DIGIT(n, d) (((n) >> (d * ((int)log2(BASE))) ) % BASE)
 #else
-    int powers_BASE[63];
+int powers_BASE[63];
 
     __attribute__((constructor)) void initialize_powers() {
         powers_BASE[0] = 1;
