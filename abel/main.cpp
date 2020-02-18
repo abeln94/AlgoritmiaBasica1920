@@ -14,14 +14,32 @@ using namespace std;
 
 // -------------------- integer as digits --------------------
 
-typedef int int_digit[DIGITS];
+struct int_digit {
+    int digits[DIGITS];
 
-int getInt(const int_digit &data) {
-    int i = 0;
-    for (int d = DIGITS - 1; d >= 0; --d) {
-        i = i * BASE + data[d];
+    int as_int() const {
+        int i = 0;
+        for (int d = DIGITS - 1; d >= 0; --d) {
+            i = i * BASE + digits[d];
+        }
+        return i;
     }
-    return i;
+
+    int &operator[](int d) {
+        return digits[d];
+    }
+
+    int_digit &operator=(int_digit &other) {
+        for (int d = 0; d < DIGITS; ++d) {
+            digits[d] = other[d];
+        }
+        return *this;
+    }
+};
+
+ostream &operator<<(ostream &o, int_digit i) {
+    o << i.as_int();
+    return o;
 }
 
 // -------------------- RANDOM --------------------
@@ -33,7 +51,7 @@ void getRandomNumber(int &as_int, int_digit &as_int_digit) {
     for (int d = 0; d < DIGITS; ++d) {
         as_int_digit[d] = uniform_int_distribution<>(0, BASE - 1)(generator);
     }
-    as_int = getInt(as_int_digit);
+    as_int = as_int_digit.as_int();
 }
 
 // -------------------- SORT --------------------
@@ -65,16 +83,12 @@ void sortByDigit(int_digit array[], int n, int digit) {
     auto *arraycopy = new int_digit[n]; // using new because otherwise it is allocated on the heap and produces a segmentation fault with very big n
     for (int i = n - 1; i >= 0; --i) {
         int pos = --count[array[i][digit]];
-        for (int d = 0; d < DIGITS; ++d) {
-            arraycopy[pos][d] = array[i][d];
-        }
+        arraycopy[pos] = array[i];
     }
 
     // back to original array O(n*DIGITS)
     for (int i = 0; i < n; ++i) {
-        for (int d = 0; d < DIGITS; ++d) {
-            array[i][d] = arraycopy[i][d];
-        }
+        array[i] = arraycopy[i];
     }
 
     delete[](arraycopy);
@@ -144,7 +158,7 @@ int main() {
 
             // check
             for (int i = 0; i < N - 1; ++i) {
-                if (getInt(data_our[i]) > getInt(data_our[i + 1])) {
+                if (data_our[i].as_int() > data_our[i + 1].as_int()) {
                     cout << "data_our not sorted";
                     COUT_VECTOR(data_our, N);
                     return -1;
