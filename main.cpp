@@ -39,7 +39,7 @@ void sortByDigit(int array[], int n, int digit) {
         count[DIGIT(array[i], digit)]++;
     }
 
-    // convert count to accumulate O(BASE)
+    // convert count to accumulate O(BASE) (BASE << n)
     for (int i = 1; i < BASE; ++i) {
         count[i] += count[i - 1];
     }
@@ -60,7 +60,7 @@ void sortByDigit(int array[], int n, int digit) {
  * Sorts an array of integers by using radix sort
  * @param array array of elements, input and output
  * @param n length of array
- * @param digits nuber of digits of the max element
+ * @param digits number of digits of the max element
  */
 void sortByRadix(int array[], int n, int digits) {
     // sort by each digit
@@ -92,7 +92,7 @@ int main() {
     output.open("output.csv");
 
     // define
-    int D = 9; // <=9
+    int D = 4; // <=9
     int REPEAT = 10;
 
     for (int N = 20000; N <= 200000; N += 2000) {
