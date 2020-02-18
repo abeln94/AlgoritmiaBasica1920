@@ -11,7 +11,8 @@ pol = np.polyfit(Ns, times_our, 1)
 Ev = lambda x: pol[1] + pol[0] * x
 
 print("{}+x*{}".format(pol[1], pol[0]))
-print("5000 ->", Ev(5000))
+m = (max(Ns) + min(Ns)) / 2
+print(m, "->", Ev(m))
 
 plt.plot(Ns, times_our)  # blue: our
 plt.plot(Ns, [Ev(x) for x in Ns], color='r')  # red: our fit (line)
