@@ -8,36 +8,38 @@
 
 using namespace std;
 
-#define BASE 4
+#define BASE 10
+
+#define DIGITS 6 // <=9
+
+// -------------------- integer as digits --------------------
+
+typedef int int_digit[DIGITS];
+
+int getInt(const int_digit &data) {
+    int i = 0;
+    for (int d = DIGITS - 1; d >= 0; --d) {
+        i = i * BASE + data[d];
+    }
+    return i;
+}
 
 // -------------------- RANDOM --------------------
 
 static random_device rd;
 static mt19937 generator(rd());
 
-int getRandomNumber(int digits) {
-    return uniform_int_distribution<>(0, pow(BASE, digits) - 1)(generator);
+void getRandomNumber(int &as_int, int_digit &as_int_digit) {
+    for (int d = 0; d < DIGITS; ++d) {
+        as_int_digit[d] = uniform_int_distribution<>(0, BASE - 1)(generator);
+    }
+    as_int = getInt(as_int_digit);
 }
 
 // -------------------- SORT --------------------
 
 #define SWAP(v, a, b) auto temp = v[a]; v[a]=v[b]; v[b]=temp
 
-#if (BASE & (BASE-1)) == 0
-#define DIGIT(n, d) (((n) >> (d * ((int)log2(BASE))) ) % BASE)
-#else
-int powers_BASE[63];
-
-    __attribute__((constructor)) void initialize_powers() {
-        powers_BASE[0] = 1;
-        int i = 1;
-        int pow = 1;
-        while (pow * BASE > pow) {
-            powers_BASE[i++] = (pow *= BASE);
-        }
-    }
-    #define DIGIT(n, d) (((n) / powers_BASE[d] ) % BASE)
-#endif
 
 /**
  * Sorts the array based on the specified digit of the numbers.
@@ -46,39 +48,36 @@ int powers_BASE[63];
  * @param n length of array
  * @param digit digit to sort (0=less significative)
  */
-void sortByDigit(int array[], int n, int digit, int digits) {
-
-    if (n <= 0 || digit < 0) return;
+void sortByDigit(int_digit array[], int n, int digit) {
 
     // count number of each digit O(n)
     int count[BASE] = {0};
     for (int i = 0; i < n; ++i) {
-        count[DIGIT(array[i], digit)]++;
+        count[array[i][digit]]++;
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
-    // also copy to another array
-    int limits[BASE + 1] = {0};
-    limits[1] = count[0];
     for (int i = 1; i < BASE; ++i) {
-        limits[i + 1] = (count[i] += count[i - 1]);
+        count[i] += count[i - 1];
     }
 
-    // copy to new array in order O(n)
-    int arraycopy[n];
+    // copy to new array in order O(n*DIGITS)
+    auto *arraycopy = new int_digit[n]; // using new because otherwise it is allocated on the heap and produces a segmentation fault with very big n
     for (int i = n - 1; i >= 0; --i) {
-        arraycopy[--count[DIGIT(array[i], digit)]] = array[i];
+        int pos = --count[array[i][digit]];
+        for (int d = 0; d < DIGITS; ++d) {
+            arraycopy[pos][d] = array[i][d];
+        }
     }
 
-    // back to original array O(n)
+    // back to original array O(n*DIGITS)
     for (int i = 0; i < n; ++i) {
-        array[i] = arraycopy[i];
+        for (int d = 0; d < DIGITS; ++d) {
+            array[i][d] = arraycopy[i][d];
+        }
     }
 
-    // sort new array for next digit
-    for (int i = 0; i < BASE; ++i) {
-        sortByDigit(&array[limits[i]], limits[i + 1] - limits[i], digit - 1, digits);
-    }
+    delete[](arraycopy);
 }
 
 /**
@@ -87,8 +86,10 @@ void sortByDigit(int array[], int n, int digit, int digits) {
  * @param n length of array
  * @param digits number of digits of the max element
  */
-void sortByRadix(int array[], int n, int digits) {
-    sortByDigit(array, n, digits - 1, digits);
+void sortByRadix(int_digit array[], int n) {
+    for (int d = 0; d < DIGITS; ++d) {
+        sortByDigit(array, n, d);
+    }
 }
 
 // -------------------- MAIN --------------------
@@ -114,7 +115,6 @@ int main() {
     output.open("output.csv");
 
     // define
-    int D = 6; // <=9
     int REPEAT = 10;
 
     for (int N = 20000; N <= 200000; N += 2000) {
@@ -124,15 +124,16 @@ int main() {
         for (int t = 0; t < REPEAT; ++t) {
 
             // generate random vector
-            int data_our[N], data_std[N];
+            int data_std[N];
+            int_digit data_our[N];
             for (int i = 0; i < N; ++i) {
-                data_our[i] = data_std[i] = getRandomNumber(D);
+                getRandomNumber(data_std[i], data_our[i]);
             }
 //        COUT_VECTOR(vector, N);
 
             // sort
             MEASURE(time_our, {
-                sortByRadix(data_our, N, D);
+                sortByRadix(data_our, N);
             })
 
             MEASURE(time_std, {
@@ -143,7 +144,7 @@ int main() {
 
             // check
             for (int i = 0; i < N - 1; ++i) {
-                if (data_our[i] > data_our[i + 1]) {
+                if (getInt(data_our[i]) > getInt(data_our[i + 1])) {
                     cout << "data_our not sorted";
                     COUT_VECTOR(data_our, N);
                     return -1;
