@@ -10,7 +10,7 @@ using namespace std;
 
 #define BASE 10
 
-#define DIGITS 9 // <=9
+#define DIGITS 4 // <=9
 
 // -------------------- INTEGER --------------------
 
@@ -177,7 +177,7 @@ int main() {
     // define
     int REPEAT = 10;
 
-    for (int N = 20000; N <= 200000; N += 2000) {
+    for (int N = 10000; N <= 100000; N += 1000) {
         cout << "\rN=" << N << flush;
         int time_our = 0;
         int time_std = 0;
