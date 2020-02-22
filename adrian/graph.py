@@ -1,0 +1,20 @@
+import numpy as np
+from matplotlib import pyplot as plt
+
+data = np.loadtxt("output.csv")
+
+Ns = data[:, 0]
+times_our = data[:, 1]
+times_std = data[:, 2]
+
+pol = np.polyfit(Ns, times_our, 1)
+Ev = lambda x: pol[1] + pol[0] * x
+
+print("{}+x*{}".format(pol[1], pol[0]))
+m = (max(Ns) + min(Ns)) / 2
+print(m, "->", Ev(m))
+
+plt.plot(Ns, times_our)  # blue: our
+plt.plot(Ns, [Ev(x) for x in Ns], color='r')  # red: our fit (line)
+plt.plot(Ns, times_std, color='g')  # green: their
+plt.show()
