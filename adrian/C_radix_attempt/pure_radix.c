@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdio.h> // DELETE AFTER DEBUG THIS LIB
 #include "pure_radix.h"
 
 // variable which value is used as number's base
