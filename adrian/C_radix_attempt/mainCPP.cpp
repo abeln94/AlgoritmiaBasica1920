@@ -174,7 +174,7 @@ int main() {
     for (int i = 0; i < 10; ++i) {
 		generateRandomNumber(data_std[i], data_our[i]);
     }
-    data_mine = intArrayToCharMatrix(data_std, N, DIGITS); // Mine, Adrián
+    char** data_mine = intArrayToCharMatrix(data_std, N, DIGITS); // Mine, Adrián
 	print(data_std, N);
 	
 	int time_our = 0;
@@ -186,8 +186,8 @@ int main() {
 		sortByRadix(data_our, N);
     });
 
-	time_our += Measure([&data_mine, N, DIGITS] {
-		radixSort(data_our, N, DIGITS);
+	time_our += Measure([&data_mine, N] {
+		radixSort(data_mine, N, DIGITS);
     });
 
     time_std += Measure([&data_std, N] {

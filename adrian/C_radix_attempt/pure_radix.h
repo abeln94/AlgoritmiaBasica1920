@@ -1,12 +1,20 @@
+#ifndef PURE_RADIX_H
+#define PURE_RADIX_H
+
 /*
  * CHAR MATRIX REPRESENTATION
- * 
+ * Array of N integers is representated as a matrix NxDIGITS of 
+ * characters. Each row of the matrix represent an integer in the array, 
+ * and the matrix has DIGITS number of columns, being DIGITS the number 
+ * of digits of the largest number in the array. Numbers in a row are 
+ * ordered by least to most significant digit per column's value: 
+ * 	array[i]=123 => martix[i][0]=3; matrix[i][1]=2; matrix[i][2]=1
  */
 
 /**
  * Sets the value to be used as the number's base (10 by default)
  */
-void setBase();
+void setBase(unsigned int b);
 
 /**
  * Sorts an array of integers by using radix sort
@@ -14,7 +22,7 @@ void setBase();
  * @param n length of array
  * @param digits number of digits of the max element
  */
-void radixSort(char v[][], int n, unsigned int digits);
+void radixSort(char** v, int n, unsigned int digits);
 
 /**
  * Given a matrix of N rows and digits columns, returns an array of 
@@ -24,7 +32,7 @@ void radixSort(char v[][], int n, unsigned int digits);
  * @param n length of array
  * @param digits number of digits of the max element
  */
-int* charMatrixToIntArray(char matrix[][], int n, unsigned int digits);
+int* charMatrixToIntArray(char** matrix, int n, unsigned int digits);
 
 /**
  * Given an array of N positions of digits size integers, returns a 
@@ -35,4 +43,6 @@ int* charMatrixToIntArray(char matrix[][], int n, unsigned int digits);
  * @param n length of array
  * @param digits number of digits of the max element
  */
-char* intArrayToCharMatrix(int array[], int N, unsigned int digits);
+char** intArrayToCharMatrix(int* array, int n, unsigned int digits);
+
+#endif
