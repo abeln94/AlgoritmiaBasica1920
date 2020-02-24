@@ -12,7 +12,7 @@ RADIX=pure_radix
 # Flags: see OptimizationFlags.txt
 CPPFLAGS=-std=c++11 -O3 -Wall # opciones compilación
 CFLAGS=-Ofast -march=native -funroll-loops -Wall # opciones compilación
-LDFLAGS=#-lto # opciones enlace
+LDFLAGS=-flto # opciones enlace
 #---------------------------------------------------------
 all: ${EJEC} ${EJECPP} #lo que se generará al ejecutar "make"
 c: ${EJEC} # only C main is compiled

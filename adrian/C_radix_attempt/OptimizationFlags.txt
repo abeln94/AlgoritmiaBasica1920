@@ -11,7 +11,7 @@ https://lemire.me/blog/2018/07/25/it-is-more-complicated-than-i-thought-mtune-ma
 https://wiki.gentoo.org/wiki/GCC_optimization -> deals with both compiling and linking; "-mcpu=ultrasparc -mtune=ultrasparc" are only needed in Intel
 
 => LINKING 
-~> SUMMARY: use -lto
+~> SUMMARY: use -flto
 
 HELPFUL AND RELIABLE
 https://gcc.gnu.org/wiki/LinkTimeOptimization
