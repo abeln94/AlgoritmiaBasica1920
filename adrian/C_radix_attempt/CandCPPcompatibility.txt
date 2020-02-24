@@ -1,0 +1,8 @@
+HELPFUL LINKS
+https://isocpp.org/wiki/faq/mixing-c-and-cpp
+https://www.oracle.com/technical-resources/articles/it-infrastructure/mixing-c-and-cplusplus.html
+
+CONCRETE ISSUES LINKS
+https://stackoverflow.com/questions/5430688/compiling-c-and-c-files-together-using-gcc
+https://stackoverflow.com/questions/861517/what-issues-can-i-expect-compiling-c-code-with-a-c-compiler
+https://stackoverflow.com/questions/7288404/linking-c-to-c-in-gcc/7288485

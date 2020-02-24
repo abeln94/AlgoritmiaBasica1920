@@ -1,4 +1,3 @@
-# HELPFUL https://stackoverflow.com/questions/5430688/compiling-c-and-c-files-together-using-gcc
 #---------------------------------------------------------
 # macros
 RM = /bin/rm -f  # remove
@@ -10,7 +9,7 @@ EJEC=mainC
 EJECPP=mainCPP
 RADIX=pure_radix
 #---------------------------------------------------------
-# Flags: man7.org/linux/man-pages/man1/g++.1.html, CTRL+F "Options That Control Optimization"
+# Flags: see OptimizationFlags.txt
 CPPFLAGS= -I. -std=c++11 -fmax-errors=1 -O3 -Wall # opciones compilación
 CFLAGS= -std=c99 -O3 -Wall # opciones compilación
 #---------------------------------------------------------
