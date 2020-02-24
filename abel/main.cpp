@@ -84,16 +84,17 @@ void generateRandomNumber(int &as_int, int_digit &as_int_digit) {
 /**
  * Sorts the array based on the specified digit of the numbers.
  * Local order is kept
- * @param array array of elements, input and output
+ * @param origin array of unsorted elements, input
+ * @param destiny array of sorted elements, output
  * @param n length of array
  * @param digit digit to sort (0=less significative)
  */
-void sortByDigit(int_digit array[], int n, int digit) {
+void sortByDigit(int_digit origin[], int_digit destiny[], int n, int digit) {
 
     // count number of each digit O(n)
     int count[BASE] = {0};
     for (int i = 0; i < n; ++i) {
-        count[array[i][digit]]++;
+        count[origin[i][digit]]++;
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
@@ -102,18 +103,11 @@ void sortByDigit(int_digit array[], int n, int digit) {
     }
 
     // copy to new array in order O(n*DIGITS)
-    auto *arraycopy = new int_digit[n]; // using new because otherwise it is allocated on the heap and produces a segmentation fault with very big n
     for (int i = n - 1; i >= 0; --i) {
-        int pos = --count[array[i][digit]];
-        arraycopy[pos] = array[i];
+        int pos = --count[origin[i][digit]];
+        destiny[pos] = origin[i];
     }
 
-    // back to original array O(n*DIGITS)
-    for (int i = 0; i < n; ++i) {
-        array[i] = arraycopy[i];
-    }
-
-    delete[](arraycopy);
 }
 
 /**
@@ -123,9 +117,24 @@ void sortByDigit(int_digit array[], int n, int digit) {
  * @param digits number of digits of the max element
  */
 void sortByRadix(int_digit array[], int n) {
+    auto *array1 = array;
+    auto *array2 = new int_digit[n]; // using new because otherwise it is allocated on the heap and produces a segmentation fault with very big n
+
     for (int d = 0; d < DIGITS; ++d) {
-        sortByDigit(array, n, d);
+        sortByDigit(array1, array2, n, d);
+        swap(array1, array2);
     }
+
+    // back to original array O(n*DIGITS)
+    if (DIGITS % 2 == 1) {
+        // the previous loop was executed an odd number of times, must go back to original
+        for (int i = 0; i < n; ++i) {
+            array1[i] = array2[i];
+        }
+        swap(array1, array2);
+    }
+
+    delete[](array2);
 }
 
 // -------------------- MEASURE --------------------
