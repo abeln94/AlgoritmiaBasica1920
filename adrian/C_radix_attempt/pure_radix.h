@@ -1,5 +1,5 @@
-#ifndef PURE_RADIX_H
-#define PURE_RADIX_H
+#ifndef RADIX_H
+#define RADIX_H
 
 /*
  * CHAR MATRIX REPRESENTATION
