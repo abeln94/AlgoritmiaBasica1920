@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e # error as soon as possible
 # Uploads files to hendrix, executes them, downloads results
 
 SERVER=a544125@hendrix.cps.unizar.es
@@ -8,7 +9,7 @@ UPLOAD_FILES="Makefile *.cpp"
 DOWNLOAD_FILES="*.csv"
 
 echo ">>> CREATING REMOTE FOLDER >>>"
-ssh $SERVER <<< "mkdir $REMOTE_FOLDER"
+ssh $SERVER <<< "[ -d $REMOTE_FOLDER ] || mkdir $REMOTE_FOLDER"
 echo "<<< DONE <<<"
 echo
 
@@ -22,7 +23,13 @@ ssh -tt $SERVER << EOF
 
 	cd $REMOTE_FOLDER
 	make
+	if [[ $? > 0 ]]; then
+	  exit $?
+	fi
 	./main
+	if [[ $? > 0 ]]; then
+	  exit $?
+	fi
 	exit
 EOF
 echo "<<< DONE <<<"
