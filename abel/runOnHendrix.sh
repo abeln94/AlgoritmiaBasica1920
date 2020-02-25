@@ -4,9 +4,10 @@ set -e # error as soon as possible
 # Uploads files to hendrix, executes them, downloads results
 
 SERVER=a544125@hendrix.cps.unizar.es
-REMOTE_FOLDER=/home/a544125/workspace/ALGORITMIA/clion/
+REMOTE_FOLDER='~/remoteCompiler/'
 UPLOAD_FILES="Makefile *.cpp"
 DOWNLOAD_FILES="*.csv"
+RUNNABLE="./main"
 
 echo ">>> CREATING REMOTE FOLDER >>>"
 ssh $SERVER <<< "[ -d $REMOTE_FOLDER ] || mkdir $REMOTE_FOLDER"
@@ -21,16 +22,11 @@ echo
 echo ">>> EXECUTING >>>"
 ssh -tt $SERVER << EOF
 
-	cd $REMOTE_FOLDER
-	make
-	if [[ $? > 0 ]]; then
-	  exit $?
-	fi
-	./main
-	if [[ $? > 0 ]]; then
-	  exit $?
-	fi
-	exit
+  set -e
+  cd $REMOTE_FOLDER
+  make
+  $RUNNABLE
+  exit 0
 EOF
 echo "<<< DONE <<<"
 echo
