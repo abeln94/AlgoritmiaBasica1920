@@ -2,18 +2,10 @@
 #include <stdio.h> // DELETE AFTER DEBUG THIS LIB
 #include "pure_radix.h"
 
-// variable which value is used as number's base
-static unsigned int base = 10;
-// char to int and int to ascii constant values for conversion
-static const char charOfInt[] = {'0','1','2','3','4','5','6','7','8','9'};
-static const char ASCII_NUMBER_MASK = 0x0F; // ASCII code of numbers goes from 0x30 to 0x39
-
-// Sets the value of the number's base
-void setBase(unsigned int b){
-	if(b){ // b != 0
-		base = b;
-	}
-}
+// constant used that represents number's BASE
+#define BASE 10
+// char to int and int to ascii constant value for conversion
+#define ASCII_OFFSET 48
 
 // Sorts array using radix sort
 /*
@@ -44,17 +36,20 @@ void radixSort(char** v, int n, unsigned int digits){
 // integers of N positions with equivalent values to given according 
 // to the explained representation of integers as char sequence
 int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
+	// Array's dinamic allocation
 	int* result = (int*) malloc(n*4);
 	int i;
+	// fill the array with the matrix's representated numbers
 	for(i = 0; i < n; i++){
-		result[i] = 0;
-		int weight = 1;
+		result[i] = 0; // initially assign 0 because malloc doesn't initiallizes the memory allocated
+		int weight = 1; // weight of the current digit in the defined base
 		int j;
-		for(j = digits-1; j >= 0; j--){
-			result[i] += (weight * (int) (matrix[i][j] & ASCII_NUMBER_MASK));
-			weight *= base;
+		for(j = 0; j < digits; j++){
+			result[i] += (weight * (int) (matrix[i][j] - ASCII_OFFSET));
+			weight *= BASE;
 		}
 	}
+	// return de pointer to the filled array
 	return result;
 }
 
@@ -62,17 +57,28 @@ int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
 // matrix of N rows and digits columns with equivalent values to given 
 // according to the explained representation of integers as char 
 // sequence
+// Coms: helpful link
+// 		 https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/
 char** intArrayToCharMatrix(int* array, int n, unsigned int digits){
-	char** result = (char**) malloc(n*(digits+1));
-	int i;
+	// Matrix's dinamic allocation
+	char** result = (char**) malloc(sizeof(char *) * n + sizeof(char) * (digits + 1) * n);
+	// ptr is now pointing to the first element in of matrix
+    char* ptr = (char*)(result + n);
+    // for loop to point rows pointer to appropriate location in matrix
+    int i;
+    for(i = 0; i < n; i++){
+        result[i] = (ptr + (digits + 1) * i); 
+    }
+    // fill the matrix with the array's numbers
 	for(i = 0; i < n; i++){
 		int number = array[i];
 		result[i][digits] = '\0';
 		int j;
-		for(j = digits-1; j >= 0; j--){
-			result[i][j] = charOfInt[number % base];
-			number /= base;
+		for(j = 0; j < digits; j++){
+			result[i][j] = (number % BASE) + (int) ASCII_OFFSET;
+			number /= BASE;
 		}
 	}
+	// return de pointer to the filled matrix
 	return result;
 }
