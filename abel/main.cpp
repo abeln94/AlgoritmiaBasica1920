@@ -29,31 +29,32 @@ struct radix_struct {
     /**
      * Constructor
      * @param digits number of digits
-     * @param elements number of elements
+     * @param n number of elements
      * @param numbers Array of numbers to convert
      */
-    radix_struct(int digits, int elements, const int numbers[]) {
+    radix_struct(int digits, int n, const int numbers[]) {
         this->digits = digits;
-        this->n = elements;
+        this->n = n;
 
-        array = new char *[elements];
-        for (int i = 0; i < elements; ++i) {
-            array[i] = new char[digits];
-            for (int j = 0; j < digits; j++) {
-                array[i][j] = (numbers[i] / (int) pow(BASE, j)) % BASE;
+        array = new char *[digits];
+        temp = new char *[digits];
+        for (int i = 0; i < digits; ++i) {
+            array[i] = new char[n];
+            temp[i] = new char[n];
+            for (int j = 0; j < n; j++) {
+                array[i][j] = (numbers[j] / (int) pow(BASE, i)) % BASE;
             }
         }
 
-        temp = new char *[elements];
     }
 
-    virtual ~radix_struct() {
-        for (int i = 0; i < n; ++i) {
-            delete array[i];
+    ~radix_struct() {
+        for (int i = 0; i < digits; ++i) {
+            delete[] array[i];
+            delete[] temp[i];
         }
-        delete array;
-
-        delete temp;
+        delete[] array;
+        delete[] temp;
     }
 
     /**
@@ -62,7 +63,7 @@ struct radix_struct {
     int as_int(int e) const {
         int i = 0;
         for (int d = digits - 1; d >= 0; --d) {
-            i = i * BASE + array[e][d];
+            i = i * BASE + array[d][e];
         }
         return i;
     }
@@ -109,7 +110,7 @@ void sortByDigit(radix_struct &elements, int digit) {
     // count number of each digit O(n)
     int count[BASE] = {0};
     for (int i = 0; i < elements.n; ++i) {
-        count[elements.array[i][digit]]++;
+        count[elements.array[digit][i]]++;
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
@@ -117,10 +118,12 @@ void sortByDigit(radix_struct &elements, int digit) {
         count[i] += count[i - 1];
     }
 
-    // copy to new array in order O(n)
+    // copy to new array in order O(n*BASE)
     for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --count[elements.array[i][digit]];
-        elements.temp[pos] = elements.array[i];
+        int pos = --count[elements.array[digit][i]];
+        for(int j=0;j<elements.digits;++j){
+            elements.temp[j][pos] = elements.array[j][i];
+        }
     }
 
     // move from temp to array O(1)

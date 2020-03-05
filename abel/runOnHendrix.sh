@@ -43,6 +43,9 @@ ssh -tt $SERVER << EOF
 EOF
 echo "<<< DONE <<<"
 echo
+if [[ $? != 0 && $? != 1 ]]; then
+  exit 1
+fi
 set -e
 
 # donwload results
