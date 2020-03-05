@@ -22,7 +22,8 @@ struct radix_struct {
      * The digits
      */
     char **array;
-    char **temp;
+    int *order;
+    int *order_temp;
     int digits;
     int n;
 
@@ -37,49 +38,68 @@ struct radix_struct {
         this->n = n;
 
         array = new char *[digits];
-        temp = new char *[digits];
         for (int i = 0; i < digits; ++i) {
             array[i] = new char[n];
-            temp[i] = new char[n];
             for (int j = 0; j < n; j++) {
                 array[i][j] = (numbers[j] / (int) pow(BASE, i)) % BASE;
             }
         }
 
+        order = new int[n];
+        order_temp = new int[n];
+        for (int i = 0; i < n; ++i) {
+            order[i] = i;
+        }
     }
 
     ~radix_struct() {
         for (int i = 0; i < digits; ++i) {
             delete[] array[i];
-            delete[] temp[i];
         }
         delete[] array;
-        delete[] temp;
+        delete[] order;
+        delete[] order_temp;
     }
 
     /**
-     * @return the corresponding int
+     * @param element which elements
+     * @return the corresponding element as int
      */
-    int as_int(int e) const {
+    int operator[](int element) const {
         int i = 0;
         for (int d = digits - 1; d >= 0; --d) {
-            i = i * BASE + array[d][e];
+            i = i * BASE + digit(element, d);
         }
         return i;
     }
 
-};
+    /**
+     * @param element which element
+     * @param digit which digit
+     * @return the corresponding digit
+     */
+    char digit(int element, int digit) const {
+        return array[digit][order[element]];
+    }
 
-/**
- * For print
- */
-ostream &operator<<(ostream &o, const radix_struct &elements) {
-    o << "[";
-    for (int i = 0; i < elements.n; ++i)
-        o << (i != 0 ? ", " : "") << elements.as_int(i);
-    o << "]" << endl;
-    return o;
-}
+    /**
+     * Moves the element from position 'from' to position 'to'
+     * Must commit changes with commitOrderChanges, changes are not visible from other function until then
+     * @param from current position of element
+     * @param to final position of element
+     */
+    void changeOrder(int from, int to) {
+        order_temp[to] = order[from];
+    }
+
+    /**
+     * Makes changes from changeOrder final so they are visible to the other functions
+     */
+    void commitOrderChanges() {
+        SWAP(order, order_temp);
+    }
+
+};
 
 // -------------------- RANDOM --------------------
 
@@ -110,7 +130,7 @@ void sortByDigit(radix_struct &elements, int digit) {
     // count number of each digit O(n)
     int count[BASE] = {0};
     for (int i = 0; i < elements.n; ++i) {
-        count[elements.array[digit][i]]++;
+        count[elements.digit(i, digit)]++;
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
@@ -118,16 +138,14 @@ void sortByDigit(radix_struct &elements, int digit) {
         count[i] += count[i - 1];
     }
 
-    // copy to new array in order O(n*BASE)
+    // copy to new array in order O(n)
     for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --count[elements.array[digit][i]];
-        for(int j=0;j<elements.digits;++j){
-            elements.temp[j][pos] = elements.array[j][i];
-        }
+        int pos = --count[elements.digit(i, digit)];
+        elements.changeOrder(i, pos);
     }
 
     // move from temp to array O(1)
-    SWAP(elements.temp, elements.array);
+    elements.commitOrderChanges();
 }
 
 /**
@@ -162,12 +180,19 @@ int Measure(const function<void()> &action) {
 // -------------------- UTILS --------------------
 
 /**
- * Pretty print an array (why this isn't on the std?)
+ * Pretty print any array (why this isn't on the std?)
  * @tparam T type of elements in the array
  * @param v array
  * @param n size of array
  */
-template<class T>
+template<typename T>
+void print(T &v, int n) {
+    cout << "[";
+    for (int i = 0; i < n; ++i)
+        cout << (i != 0 ? ", " : "") << v[i];
+    cout << "]" << endl;
+}
+template<typename T>
 void print(T v[], int n) {
     cout << "[";
     for (int i = 0; i < n; ++i)
@@ -223,9 +248,9 @@ int main() {
 
                 // check
                 for (int i = 0; i < N - 1; ++i) {
-                    if (data_our.as_int(i) > data_our.as_int(i + 1)) {
+                    if (data_our[i] > data_our[i + 1]) {
                         cout << "data_our not sorted: ";
-                        cout << data_our;
+                        print(data_our, N);
                         return -1;
                     }
                     if (data_std[i] > data_std[i + 1]) {
