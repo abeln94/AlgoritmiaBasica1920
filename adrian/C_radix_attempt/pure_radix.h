@@ -9,12 +9,11 @@
  * of digits of the largest number in the array. Numbers in a row are 
  * ordered by least to most significant digit per column's value: 
  * 	array[i]=123 => martix[i][0]=3; matrix[i][1]=2; matrix[i][2]=1
+ * 
+ * It's obviated in this explanation the '\0' character of end of string 
+ * in C, so in fact each rows sizes DIGITS+1, being the last of them the 
+ * mentioned character.
  */
-
-/**
- * Sets the value to be used as the number's base (10 by default)
- */
-void setBase(unsigned int b);
 
 /**
  * Sorts an array of integers by using radix sort

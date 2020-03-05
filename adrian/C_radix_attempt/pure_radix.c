@@ -2,18 +2,13 @@
 #include <stdio.h> // DELETE AFTER DEBUG THIS LIB
 #include "pure_radix.h"
 
-// variable which value is used as number's base
-static unsigned int base = 10;
-// char to int and int to ascii constant values for conversion
-static const char charOfInt[] = {'0','1','2','3','4','5','6','7','8','9'};
-static const char ASCII_NUMBER_MASK = 0x0F; // ASCII code of numbers goes from 0x30 to 0x39
+// Comment the following line to implement auxiliar array of radix sort using dynamic allocation instead of call stack one
+#define USE_STACK
 
-// Sets the value of the number's base
-void setBase(unsigned int b){
-	if(b){ // b != 0
-		base = b;
-	}
-}
+// constant used that represents number's BASE
+#define BASE 10
+// char to int and int to ascii constant value for conversion
+#define ASCII_OFFSET 48
 
 // Sorts array using radix sort
 /*
@@ -35,26 +30,87 @@ void setBase(unsigned int b){
  * 	  keep sorted values is switched between the original and the 
  * 	  dynamic one, so only if result isn't stored in the array given 
  *    as parameter when the sorting ends, a copy is needed
+ * -> auxiliar array needed to store sorted elements into each iteration 
+ *    can be reserved into call stack instead of being dynamically 
+ *    reserved using a system call, so execution time will be reduced 
+ *    significantly
+ * -> don't worry about auxiliar array's strings state; if its strings 
+ *    don't end with '\0' nothing will happen, because in all cases the 
+ *    array returned will be the given as parameter, which strings are 
+ *    correctly ended with '\0', so many memory can be saved without 
+ *    allocating the byte destinated to store the '\0' character that 
+ *    won't be used for sorting
  */
 void radixSort(char** v, int n, unsigned int digits){
-		
+	// Allocation of auxiliar "v", the array to sort in each iteration
+#ifdef USE_STACK
+	char auxiliar[n][digits]; // auxiliar array is reserved into call stack, not with dynamic allocation system call
+#else
+	// system call for dynamic allocation
+	char** auxiliar = (char**) malloc(sizeof(char *) * n + sizeof(char) * digits * n);
+	// ptr is now pointing to the first element in of matrix
+    char* ptr = (char*)(auxiliar + n);
+    // for loop to point rows pointer to appropriate location in matrix
+    int l;
+    for(l = 0; l < n; l++){
+        auxiliar[l] = (ptr + digits * l); 
+    }
+#endif
+	// Defining pointer to original array, that lets use its reference swapping it while sorting
+	char** original = v;
+	// Defining variables to be used while sorting
+	unsigned int count[BASE];
+	// Loop to sort per each digit
+	int i,j,k;
+	for(i = 0; i < digits; i++){
+		// counts the number of occurrences of each digit
+		for(j = 0; j < n; j++) {
+			count[(int) v[j][i]]++;
+		}
+		// prepares base position after count
+		for(j = 1; j < BASE; j++) {
+			count[j] += count[j - 1];
+		}
+		// sort v into auxiliar
+		for(j = n - 1; j >= 0; j--) {
+			int row = --count[(int) v[j][i]];
+			for(k = 0; k < n; k++){ 
+				auxiliar[row][k] = v[row][k];
+			}
+		}
+		// swap array's pointers		
+		char** aux = v;
+		*v = *auxiliar;
+		**auxiliar = **aux;
+	}
+	// Check if last array used as sorted isn't the given one and all elements have to be copied before return
+	if(original != v){
+		for(i = 0; i < n; i++){
+			for(j = 0; j < digits; j++){
+				v[i][j] = auxiliar[i][j];
+			}
+		}
+	}
 }
 
 // Given a matrix of N rows and digits columns, returns an array of 
 // integers of N positions with equivalent values to given according 
 // to the explained representation of integers as char sequence
 int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
+	// Array's dinamic allocation
 	int* result = (int*) malloc(n*4);
 	int i;
+	// fill the array with the matrix's representated numbers
 	for(i = 0; i < n; i++){
-		result[i] = 0;
-		int weight = 1;
+		result[i] = 0; // initially assign 0 because malloc doesn't initiallizes the memory allocated
+		int weight = 1; // weight of the current digit in the defined base
 		int j;
-		for(j = digits-1; j >= 0; j--){
-			result[i] += (weight * (int) (matrix[i][j] & ASCII_NUMBER_MASK));
-			weight *= base;
+		for(j = 0; j < digits; j++){
+			result[i] += (weight * (int) (matrix[i][j] - ASCII_OFFSET));
+			weight *= BASE;
 		}
 	}
+	// return de pointer to the filled array
 	return result;
 }
 
@@ -62,17 +118,28 @@ int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
 // matrix of N rows and digits columns with equivalent values to given 
 // according to the explained representation of integers as char 
 // sequence
+// Coms: helpful link
+// 		 https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/
 char** intArrayToCharMatrix(int* array, int n, unsigned int digits){
-	char** result = (char**) malloc(n*(digits+1));
-	int i;
+	// Matrix's dinamic allocation
+	char** result = (char**) malloc(sizeof(char *) * n + sizeof(char) * (digits + 1) * n);
+	// ptr is now pointing to the first element in of matrix
+    char* ptr = (char*)(result + n);
+    // for loop to point rows pointer to appropriate location in matrix
+    int i;
+    for(i = 0; i < n; i++){
+        result[i] = (ptr + (digits + 1) * i); 
+    }
+    // fill the matrix with the array's numbers
 	for(i = 0; i < n; i++){
 		int number = array[i];
 		result[i][digits] = '\0';
 		int j;
-		for(j = digits-1; j >= 0; j--){
-			result[i][j] = charOfInt[number % base];
-			number /= base;
+		for(j = 0; j < digits; j++){
+			result[i][j] = (number % BASE) + (int) ASCII_OFFSET;
+			number /= BASE;
 		}
 	}
+	// return de pointer to the filled matrix
 	return result;
 }
