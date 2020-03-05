@@ -3,18 +3,25 @@ from matplotlib import pyplot as plt
 
 data = np.loadtxt("output.csv")
 
-Ns = data[:, 0]
-times_our = data[:, 1]
-times_std = data[:, 2]
+digits = data[:, 0]
+Ns = data[:, 1]
+times_our = data[:, 2]
+times_std = data[:, 3]
 
-pol = np.polyfit(Ns, times_our, 1)
-Ev = lambda x: pol[1] + pol[0] * x
+for digit in range(1, 9 + 1):
+    indexes = digits == digit
+    plt.subplot(3, 3, digit)
+    plt.title('{} digit{}'.format(digit, '' if digit == 1 else 's'))
 
-print("{}+x*{}".format(pol[1], pol[0]))
-m = (max(Ns) + min(Ns)) / 2
-print(m, "->", Ev(m))
+    pol = np.polyfit(Ns[indexes], times_our[indexes], 1)
+    Ev = lambda x: pol[1] + pol[0] * x
 
-plt.plot(Ns, times_our)  # blue: our
-plt.plot(Ns, [Ev(x) for x in Ns], color='r')  # red: our fit (line)
-plt.plot(Ns, times_std, color='g')  # green: their
+    print("{}+x*{}".format(pol[1], pol[0]))
+    m = (max(Ns[indexes]) + min(Ns[indexes])) / 2
+    print(m, "->", Ev(m))
+
+    plt.plot(Ns[indexes], times_our[indexes])  # blue: our
+    plt.plot(Ns[indexes], [Ev(x) for x in Ns[indexes]], color='r')  # red: our fit (line)
+    plt.plot(Ns[indexes], times_std[indexes], color='g')  # green: their
+plt.tight_layout()
 plt.show()

@@ -47,6 +47,15 @@ struct radix_struct {
         temp = new char *[elements];
     }
 
+    virtual ~radix_struct() {
+        for (int i = 0; i < n; ++i) {
+            delete array[i];
+        }
+        delete array;
+
+        delete temp;
+    }
+
     /**
      * @return the corresponding int
      */
@@ -111,7 +120,7 @@ void sortByDigit(radix_struct &elements, int digit) {
     // copy to new array in order O(n)
     for (int i = elements.n - 1; i >= 0; --i) {
         int pos = --count[elements.array[i][digit]];
-        SWAP(elements.array[i], elements.temp[pos]);
+        elements.temp[pos] = elements.array[i];
     }
 
     // move from temp to array O(1)
@@ -182,51 +191,52 @@ int main() {
 
     // define
     int REPEAT = 10;
-    int digits = 4;
 
-    for (int N = 10000; N <= 100000; N += 1000) {
-        cout << "\rN=" << N << flush;
-        int time_our = 0;
-        int time_std = 0;
-        for (int t = 0; t < REPEAT; ++t) {
+    for (int digits = 1; digits <= 9; digits++) {
+        for (int N = 5000; N <= 50000; N += 1000) {
+            cout << "\rdigits=" << digits << ", N=" << N << flush;
+            int time_our = 0;
+            int time_std = 0;
+            for (int t = 0; t < REPEAT; ++t) {
 
-            // generate random vector
-            int data_std[N];
-            for (int i = 0; i < N; ++i) {
-                data_std[i] = generateRandomNumber(digits);
-            }
-            radix_struct data_our(digits, N, data_std);
+                // generate random vector
+                int data_std[N];
+                for (int i = 0; i < N; ++i) {
+                    data_std[i] = generateRandomNumber(digits);
+                }
+                radix_struct data_our(digits, N, data_std);
 //        print(data_std, N);
 
-            // sort
-            time_our += Measure([&data_our, N] {
-                sortByRadix(data_our);
-            });
+                // sort
+                time_our += Measure([&data_our, N] {
+                    sortByRadix(data_our);
+                });
 
-            time_std += Measure([&data_std, N] {
-                sort(data_std, data_std + N);
-            });
+                time_std += Measure([&data_std, N] {
+                    sort(data_std, data_std + N);
+                });
 
 //        print(data_std, N);
 
-            // check
-            for (int i = 0; i < N - 1; ++i) {
-                if (data_our.as_int(i) > data_our.as_int(i + 1)) {
-                    cout << "data_our not sorted: ";
-                    cout << data_our;
-                    return -1;
-                }
-                if (data_std[i] > data_std[i + 1]) {
-                    cout << "data_std not sorted: ";
-                    print(data_std, N);
-                    return -1;
+                // check
+                for (int i = 0; i < N - 1; ++i) {
+                    if (data_our.as_int(i) > data_our.as_int(i + 1)) {
+                        cout << "data_our not sorted: ";
+                        cout << data_our;
+                        return -1;
+                    }
+                    if (data_std[i] > data_std[i + 1]) {
+                        cout << "data_std not sorted: ";
+                        print(data_std, N);
+                        return -1;
+                    }
                 }
             }
+
+            time_our /= REPEAT;
+            time_std /= REPEAT;
+            output << digits << " " << N << " " << time_our << " " << time_std << endl;
         }
-
-        time_our /= REPEAT;
-        time_std /= REPEAT;
-        output << N << " " << time_our << " " << time_std << endl;
     }
 
     return 0;
