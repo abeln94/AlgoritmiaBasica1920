@@ -10,55 +10,64 @@ using namespace std;
 
 #define BASE 10
 
-#define DIGITS 4 // <=9
+#define SWAP(a, b) auto c = a; a = b; b = c
 
 // -------------------- INTEGER --------------------
 
 /**
- * Struct for integers saved as digits
+ * Struct for sorting with radix
  */
-struct int_digit {
+struct radix_struct {
     /**
      * The digits
      */
-    char digits[DIGITS];
+    char **array;
+    char **temp;
+    int digits;
+    int n;
+
+    /**
+     * Constructor
+     * @param digits number of digits
+     * @param elements number of elements
+     * @param numbers Array of numbers to convert
+     */
+    radix_struct(int digits, int elements, const int numbers[]) {
+        this->digits = digits;
+        this->n = elements;
+
+        array = new char *[elements];
+        for (int i = 0; i < elements; ++i) {
+            array[i] = new char[digits];
+            for (int j = 0; j < digits; j++) {
+                array[i][j] = (numbers[i] / (int) pow(BASE, j)) % BASE;
+            }
+        }
+
+        temp = new char *[elements];
+    }
 
     /**
      * @return the corresponding int
      */
-    int as_int() const {
+    int as_int(int e) const {
         int i = 0;
-        for (int d = DIGITS - 1; d >= 0; --d) {
-            i = i * BASE + digits[d];
+        for (int d = digits - 1; d >= 0; --d) {
+            i = i * BASE + array[e][d];
         }
         return i;
     }
 
-    /**
-     * For assignment/access
-     */
-    char &operator[](int d) {
-        return digits[d];
-    }
-
-    /**
-     * For copy
-     */
-    int_digit &operator=(int_digit const &rhs) {
-//        if(&rhs != this) { // slower
-        for (int d = 0; d < DIGITS; ++d) {
-            digits[d] = rhs.digits[d];
-        }
-//        }
-        return *this;
-    }
 };
 
 /**
  * For print
  */
-ostream &operator<<(ostream &o, int_digit i) {
-    o << i.as_int();
+ostream &operator<<(ostream &o, const radix_struct &elements) {
+    o << "[";
+    for (int i = 0; i < elements.n; ++i)
+        o << (i != 0 ? ", " : "") << elements.as_int(i);
+    o << "]" << endl;
     return o;
 }
 
@@ -70,13 +79,10 @@ static mt19937 generator(rd());
 /**
  * Generates a random number of DIGITS digits
  * @param as_int the number saved as int (output)
- * @param as_int_digit the number saved as int_digit (output)
+ * @param as_int_digit the number saved as radix_struct (output)
  */
-void generateRandomNumber(int &as_int, int_digit &as_int_digit) {
-    for (int d = 0; d < DIGITS; ++d) {
-        as_int_digit[d] = uniform_int_distribution<>(0, BASE - 1)(generator);
-    }
-    as_int = as_int_digit.as_int();
+int generateRandomNumber(int digits) {
+    return uniform_int_distribution<>(0, pow(BASE, digits) - 1)(generator);
 }
 
 // -------------------- SORT --------------------
@@ -89,12 +95,12 @@ void generateRandomNumber(int &as_int, int_digit &as_int_digit) {
  * @param n length of array
  * @param digit digit to sort (0=less significative)
  */
-void sortByDigit(int_digit origin[], int_digit destiny[], int n, int digit) {
+void sortByDigit(radix_struct &elements, int digit) {
 
     // count number of each digit O(n)
     int count[BASE] = {0};
-    for (int i = 0; i < n; ++i) {
-        count[origin[i][digit]]++;
+    for (int i = 0; i < elements.n; ++i) {
+        count[elements.array[i][digit]]++;
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
@@ -102,39 +108,26 @@ void sortByDigit(int_digit origin[], int_digit destiny[], int n, int digit) {
         count[i] += count[i - 1];
     }
 
-    // copy to new array in order O(n*DIGITS)
-    for (int i = n - 1; i >= 0; --i) {
-        int pos = --count[origin[i][digit]];
-        destiny[pos] = origin[i];
+    // copy to new array in order O(n)
+    for (int i = elements.n - 1; i >= 0; --i) {
+        int pos = --count[elements.array[i][digit]];
+        SWAP(elements.array[i], elements.temp[pos]);
     }
 
+    // move from temp to array O(1)
+    SWAP(elements.temp, elements.array);
 }
 
 /**
  * Sorts an array of integers by using radix sort
- * @param array array of elements, input and output
+ * @param elements struct with elements, input and output
  * @param n length of array
  * @param digits number of digits of the max element
  */
-void sortByRadix(int_digit array[], int n) {
-    auto *array1 = array;
-    auto *array2 = new int_digit[n]; // using new because otherwise it is allocated on the heap and produces a segmentation fault with very big n
-
-    for (int d = 0; d < DIGITS; ++d) {
-        sortByDigit(array1, array2, n, d);
-        swap(array1, array2);
+void sortByRadix(radix_struct &elements) {
+    for (int d = 0; d < elements.digits; ++d) {
+        sortByDigit(elements, d);
     }
-
-    // back to original array O(n*DIGITS)
-    if (DIGITS % 2 == 1) {
-        // the previous loop was executed an odd number of times, must go back to original
-        for (int i = 0; i < n; ++i) {
-            array1[i] = array2[i];
-        }
-        swap(array1, array2);
-    }
-
-    delete[](array2);
 }
 
 // -------------------- MEASURE --------------------
@@ -178,6 +171,10 @@ int main() {
     cout << "############################" << endl;
     cout << "# Using slow debug version #" << endl;
     cout << "############################" << endl;
+
+    int n[] = {34, 12, 4};
+    radix_struct s(2, 3, n);
+    sortByRadix(s);
 #endif
 
     ofstream output;
@@ -185,6 +182,7 @@ int main() {
 
     // define
     int REPEAT = 10;
+    int digits = 4;
 
     for (int N = 10000; N <= 100000; N += 1000) {
         cout << "\rN=" << N << flush;
@@ -194,15 +192,15 @@ int main() {
 
             // generate random vector
             int data_std[N];
-            int_digit data_our[N];
             for (int i = 0; i < N; ++i) {
-                generateRandomNumber(data_std[i], data_our[i]);
+                data_std[i] = generateRandomNumber(digits);
             }
+            radix_struct data_our(digits, N, data_std);
 //        print(data_std, N);
 
             // sort
             time_our += Measure([&data_our, N] {
-                sortByRadix(data_our, N);
+                sortByRadix(data_our);
             });
 
             time_std += Measure([&data_std, N] {
@@ -213,9 +211,9 @@ int main() {
 
             // check
             for (int i = 0; i < N - 1; ++i) {
-                if (data_our[i].as_int() > data_our[i + 1].as_int()) {
+                if (data_our.as_int(i) > data_our.as_int(i + 1)) {
                     cout << "data_our not sorted: ";
-                    print(data_our, N);
+                    cout << data_our;
                     return -1;
                 }
                 if (data_std[i] > data_std[i + 1]) {
