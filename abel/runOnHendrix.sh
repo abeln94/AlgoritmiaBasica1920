@@ -5,7 +5,7 @@
 
 # settings
 SERVER=a544125@hendrix.cps.unizar.es
-REMOTE_FOLDER='~/remoteCompiler/'
+REMOTE_FOLDER='~/.remoteCompiler/'
 UPLOAD_FILES="Makefile *.cpp"
 DOWNLOAD_FILES="*.csv"
 RUNNABLE="./main"
@@ -20,7 +20,7 @@ trap 'err_report $LINENO $?' ERR
 
 # create remote folder
 echo ">>> CREATING REMOTE FOLDER >>>"
-ssh $SERVER <<< "[ -d $REMOTE_FOLDER ] || mkdir $REMOTE_FOLDER"
+ssh $SERVER <<< "rm -r $REMOTE_FOLDER ; mkdir $REMOTE_FOLDER"
 echo "<<< DONE <<<"
 echo
 
@@ -44,13 +44,19 @@ EOF
 echo "<<< DONE <<<"
 echo
 if [[ $? != 0 && $? != 1 ]]; then
-  exit 1
+  exit $?
 fi
 set -e
 
 # donwload results
 echo ">>> DOWNLOADING FILES >>>"
 scp $SERVER:$REMOTE_FOLDER"$DOWNLOAD_FILES" .
+echo "<<< DONE <<<"
+echo
+
+# deleting remote folder
+echo ">>> DELETING REMOTE FOLDER >>>"
+ssh $SERVER <<< "rm -r $REMOTE_FOLDER"
 echo "<<< DONE <<<"
 echo
 

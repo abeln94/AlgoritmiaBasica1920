@@ -22,7 +22,7 @@ struct radix_struct {
      * The digits
      */
     char **array;
-    char **array_temp;
+    int *order;
     int *order_temp;
     int digits;
     int n;
@@ -38,26 +38,26 @@ struct radix_struct {
         this->n = n;
 
         array = new char *[digits];
-        array_temp = new char *[digits];
         for (int i = 0; i < digits; ++i) {
             array[i] = new char[n];
-            array_temp[i] = new char[n];
             for (int j = 0; j < n; j++) {
                 array[i][j] = (numbers[j] / (int) pow(BASE, i)) % BASE;
             }
         }
 
+        order = new int[n];
         order_temp = new int[n];
+        for (int i = 0; i < n; ++i) {
+            order[i] = i;
+        }
     }
 
     ~radix_struct() {
         for (int i = 0; i < digits; ++i) {
             delete[] array[i];
-            delete[] array_temp[i];
         }
         delete[] array;
-        delete[] array_temp;
-
+        delete[] order;
         delete[] order_temp;
     }
 
@@ -79,31 +79,24 @@ struct radix_struct {
      * @return the corresponding digit
      */
     char digit(int element, int digit) const {
-        return array[digit][element];
+        return array[digit][order[element]];
     }
 
     /**
      * Moves the element from position 'from' to position 'to'
-     * Must commit changes with commitOrderChanges, changes are not visible from the other functions until then
+     * Must commit changes with commitOrderChanges, changes are not visible from other function until then
      * @param from current position of element
      * @param to final position of element
      */
     void changeOrder(int from, int to) {
-        order_temp[from] = to;
+        order_temp[to] = order[from];
     }
 
     /**
      * Makes changes from changeOrder final so they are visible to the other functions
      */
     void commitOrderChanges() {
-        // move from array to array_temp based on order_temp
-        for (int i = 0; i < digits; ++i) {
-            for (int j = 0; j < n; ++j) {
-                array_temp[i][order_temp[j]] = array[i][j];
-            }
-        }
-        // swap array and array_temp
-        SWAP(array, array_temp);
+        SWAP(order, order_temp);
     }
 
 };
@@ -199,7 +192,6 @@ void print(T &v, int n) {
         cout << (i != 0 ? ", " : "") << v[i];
     cout << "]" << endl;
 }
-
 template<typename T>
 void print(T v[], int n) {
     cout << "[";
@@ -220,7 +212,6 @@ int main() {
     int n[] = {34, 12, 4};
     radix_struct s(2, 3, n);
     sortByRadix(s);
-    print(s, 3);
 #endif
 
     ofstream output;
