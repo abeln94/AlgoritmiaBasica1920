@@ -2,6 +2,9 @@
 #include <stdio.h> // DELETE AFTER DEBUG THIS LIB
 #include "pure_radix.h"
 
+// Comment the following line to implement auxiliar array of radix sort using dynamic allocation instead of call stack one
+#define USE_STACK
+
 // constant used that represents number's BASE
 #define BASE 10
 // char to int and int to ascii constant value for conversion
@@ -27,9 +30,67 @@
  * 	  keep sorted values is switched between the original and the 
  * 	  dynamic one, so only if result isn't stored in the array given 
  *    as parameter when the sorting ends, a copy is needed
+ * -> auxiliar array needed to store sorted elements into each iteration 
+ *    can be reserved into call stack instead of being dynamically 
+ *    reserved using a system call, so execution time will be reduced 
+ *    significantly
+ * -> don't worry about auxiliar array's strings state; if its strings 
+ *    don't end with '\0' nothing will happen, because in all cases the 
+ *    array returned will be the given as parameter, which strings are 
+ *    correctly ended with '\0', so many memory can be saved without 
+ *    allocating the byte destinated to store the '\0' character that 
+ *    won't be used for sorting
  */
 void radixSort(char** v, int n, unsigned int digits){
-		
+	// Allocation of auxiliar "v", the array to sort in each iteration
+#ifdef USE_STACK
+	char auxiliar[n][digits]; // auxiliar array is reserved into call stack, not with dynamic allocation system call
+#else
+	// system call for dynamic allocation
+	char** auxiliar = (char**) malloc(sizeof(char *) * n + sizeof(char) * digits * n);
+	// ptr is now pointing to the first element in of matrix
+    char* ptr = (char*)(auxiliar + n);
+    // for loop to point rows pointer to appropriate location in matrix
+    int l;
+    for(l = 0; l < n; l++){
+        auxiliar[l] = (ptr + digits * l); 
+    }
+#endif
+	// Defining pointer to original array, that lets use its reference swapping it while sorting
+	char** original = v;
+	// Defining variables to be used while sorting
+	unsigned int count[BASE];
+	// Loop to sort per each digit
+	int i,j,k;
+	for(i = 0; i < digits; i++){
+		// counts the number of occurrences of each digit
+		for(j = 0; j < n; j++) {
+			count[(int) v[j][i]]++;
+		}
+		// prepares base position after count
+		for(j = 1; j < BASE; j++) {
+			count[j] += count[j - 1];
+		}
+		// sort v into auxiliar
+		for(j = n - 1; j >= 0; j--) {
+			int row = --count[(int) v[j][i]];
+			for(k = 0; k < n; k++){ 
+				auxiliar[row][k] = v[row][k];
+			}
+		}
+		// swap array's pointers		
+		char** aux = v;
+		*v = *auxiliar;
+		**auxiliar = **aux;
+	}
+	// Check if last array used as sorted isn't the given one and all elements have to be copied before return
+	if(original != v){
+		for(i = 0; i < n; i++){
+			for(j = 0; j < digits; j++){
+				v[i][j] = auxiliar[i][j];
+			}
+		}
+	}
 }
 
 // Given a matrix of N rows and digits columns, returns an array of 
