@@ -41,7 +41,7 @@
  *    allocating the byte destinated to store the '\0' character that 
  *    won't be used for sorting
  */
-void radixSort(char** v, int n, unsigned int digits){
+void radixSort(char* v, int n, unsigned int digits){
 	// Allocation of auxiliar "v", the array to sort in each iteration
 #ifdef USE_STACK
 	char auxiliar[n][digits]; // auxiliar array is reserved into call stack, not with dynamic allocation system call
@@ -96,7 +96,7 @@ void radixSort(char** v, int n, unsigned int digits){
 // Given a matrix of N rows and digits columns, returns an array of 
 // integers of N positions with equivalent values to given according 
 // to the explained representation of integers as char sequence
-int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
+int* charMatrixToIntArray(char* matrix, int n, unsigned int digits){
 	// Array's dinamic allocation
 	int* result = (int*) malloc(n*4);
 	int i;
@@ -125,16 +125,9 @@ int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
 //       ...this last representation with only pointer operations (not 
 //       indexes)
 //       https://www.tutorialspoint.com/how-to-dynamically-allocate-a-2d-array-in-c
-char** intArrayToCharMatrix(int* array, int n, unsigned int digits){
+char* intArrayToCharMatrix(int* array, int n, unsigned int digits){
 	// Matrix's dinamic allocation
-	char** result = (char**) malloc(sizeof(char *) * n + sizeof(char) * (digits + 1) * n);
-	// ptr is now pointing to the first element in of matrix
-    char* ptr = (char*)(result + n);
-    // for loop to point rows pointer to appropriate location in matrix
-    int i;
-    for(i = 0; i < n; i++){
-        result[i] = (ptr + (digits + 1) * i); 
-    }
+	char* result = (char*) malloc(sizeof(char) * (digits + 1) * n);
     // fill the matrix with the array's numbers
 	for(i = 0; i < n; i++){
 		int number = array[i];

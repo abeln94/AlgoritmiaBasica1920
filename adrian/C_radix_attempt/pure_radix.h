@@ -21,7 +21,7 @@
  * @param n length of array
  * @param digits number of digits of the max element
  */
-void radixSort(char** v, int n, unsigned int digits);
+void radixSort(char* v, int n, unsigned int digits);
 
 /**
  * Given a matrix of N rows and digits columns, returns an array of 
@@ -31,7 +31,7 @@ void radixSort(char** v, int n, unsigned int digits);
  * @param n length of array
  * @param digits number of digits of the max element
  */
-int* charMatrixToIntArray(char** matrix, int n, unsigned int digits);
+int* charMatrixToIntArray(char* matrix, int n, unsigned int digits);
 
 /**
  * Given an array of N positions of digits size integers, returns a 
@@ -42,6 +42,6 @@ int* charMatrixToIntArray(char** matrix, int n, unsigned int digits);
  * @param n length of array
  * @param digits number of digits of the max element
  */
-char** intArrayToCharMatrix(int* array, int n, unsigned int digits);
+char* intArrayToCharMatrix(int* array, int n, unsigned int digits);
 
 #endif
