@@ -1,0 +1,7 @@
+Investigate more about "in-situ" radix sort (no auxiliar array needed)
+
+-> PDF
+https://www.cs.rutgers.edu/~muthu/soradix.pdf
+
+-> In-place radix sort
+https://stackoverflow.com/questions/463105/in-place-radix-sort

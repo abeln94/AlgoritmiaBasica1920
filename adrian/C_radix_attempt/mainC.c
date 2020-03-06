@@ -27,7 +27,11 @@ int main(){
 	int* reconverted = charMatrixToIntArray(converted, N, 5);
 	printArray(reconverted,N);
 	// test sorting
-	//radixSort(converted, N, 5);
+	printf("-> Attempt of sorting\n");
+	radixSort(converted, N, 5);
+	printMatrix(converted, N, 5);
+	reconverted = charMatrixToIntArray(converted, N, 5);
+	printArray(reconverted,N);
 	
 	return 0;
 }
