@@ -58,19 +58,31 @@ void radixSort(char* v, int n, unsigned int digits){
 #endif
 	// Defining pointer to original array, that lets use its reference swapping it while sorting
 	char* original = v;
-	// Defining variables to be used while sorting
-	unsigned int count[BASE] = {0};
 	// Loop to sort per each digit
 	int i,j,k;
 	for(j = 0; j < digits; j++){
+		// Defining array used to count number of digits
+		unsigned int count[BASE] = {0};
 		// counts the number of occurrences of each digit
 		for(i = 0; i < n; i++) {
 			count[(unsigned char) (*(v + i * columns + j) - ASCII_OFFSET)]++;
 		}
+		// DEBUG
+		printf("--> After counting (iteration %d)\n",j);
+		for(i = 0; i < BASE; i++){
+			printf("count[%d] = %d\n",i,count[i]);
+		}
+		// /DEBUG
 		// prepares base position after count
 		for(i = 1; i < BASE; i++) {
 			count[i] += count[i - 1];
 		}
+		// DEBUG
+		printf("--> After accumulate (iteration %d)\n",j);
+		for(i = 0; i < BASE; i++){
+			printf("count[%d] = %d\n",i,count[i]);
+		}
+		// /DEBUG
 		// sort v into auxiliar
 		for(i = n - 1; i >= 0; i--) {
 			int row = --count[(unsigned char) (*(v + i * columns + j) - ASCII_OFFSET)];
@@ -78,11 +90,9 @@ void radixSort(char* v, int n, unsigned int digits){
 				*(auxiliar + row * columns + k) = *(v + i * columns + k);
 			}
 		}
-		// swap array's pointers		
-		char* aux = v;
-		v = auxiliar;
-		auxiliar = aux;
+		// swap array's pointers
 		// DEBUG
+		printf("--> Before swap (iteration %d)\n",j);
 		for(i = 0; i < n; i++){
 			*(auxiliar + i * columns + digits) = '\0';
 		}
@@ -94,7 +104,10 @@ void radixSort(char* v, int n, unsigned int digits){
 		for(i = 0; i < n; i++){
 			printf("auxiliar[%d] = %s\n",i,(auxiliar+i*columns));
 		}
-		// /DEBUG
+		// /DEBUG		
+		char* aux = v;
+		v = auxiliar;
+		auxiliar = aux;
 	}
 	// Check if last array used as sorted isn't the given one and all elements have to be copied before return
 	if(original != v){
