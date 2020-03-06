@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h> // DELETE AFTER DEBUG THIS LIB
 #include "pure_radix.h"
 
 // Comment the following line to implement auxiliar array of radix sort using dynamic allocation instead of call stack one
@@ -54,14 +53,13 @@
  *    (n x digits) one
  */
 void radixSort(char* v, int n, unsigned int digits){
-	int columns = digits + 1;
 	// Allocation of auxiliar "v", the array to sort in each iteration
 #ifdef USE_STACK
-	char axlr[n * columns]; // auxiliar array is reserved into call stack, not with dynamic allocation system call
+	char axlr[n * digits]; // auxiliar array is reserved into call stack, not with dynamic allocation system call
 	char* auxiliar = axlr; // https://www.tutorialspoint.com/cprogramming/c_pointer_to_an_array.htm -> using array directly causes types incompatibility
 #else
 	// system call for dynamic allocation
-	char* auxiliar = (char*) malloc(sizeof(char) * columns * n);
+	char* auxiliar = (char*) malloc(sizeof(char) * digits * n);
 #endif
 	// Defining pointer to original array, that lets use its reference swapping it while sorting
 	char* original = v;
@@ -72,7 +70,7 @@ void radixSort(char* v, int n, unsigned int digits){
 		unsigned int count[BASE] = {0};
 		// counts the number of occurrences of each digit
 		for(i = 0; i < n; i++) {
-			count[(unsigned char) (*(v + i * columns + j) - ASCII_OFFSET)]++;
+			count[(unsigned char) *(v + i * digits + j)]++;
 		}
 		// prepares base position after count
 		for(i = 1; i < BASE; i++) {
@@ -80,9 +78,9 @@ void radixSort(char* v, int n, unsigned int digits){
 		}
 		// sort v into auxiliar
 		for(i = n - 1; i >= 0; i--) {
-			int row = --count[(unsigned char) (*(v + i * columns + j) - ASCII_OFFSET)];
-			for(k = 0; k < columns; k++){ 
-				*(auxiliar + row * columns + k) = *(v + i * columns + k);
+			int row = --count[(unsigned char) *(v + i * digits + j)];
+			for(k = 0; k < digits; k++){ 
+				*(auxiliar + row * digits + k) = *(v + i * digits + k);
 			}
 		}
 		// swap array's pointers	
@@ -94,10 +92,13 @@ void radixSort(char* v, int n, unsigned int digits){
 	if(original != v){
 		for(i = 0; i < n; i++){
 			for(j = 0; j < digits; j++){
-				*(v + i * columns + j) = *(auxiliar + i * columns + j);
+				*(v + i * digits + j) = *(auxiliar + i * digits + j);
 			}
 		}
 	}
+#ifndef USE_STACK
+	free(auxiliar);
+#endif
 }
 
 // Given a matrix of N rows and digits columns, returns an array of 
@@ -113,7 +114,7 @@ int* charMatrixToIntArray(char* matrix, int n, unsigned int digits){
 		int weight = 1; // weight of the current digit in the defined base
 		int j;
 		for(j = 0; j < digits; j++){
-			result[i] += (weight * (int) (*(matrix + i * (digits + 1) + j) - ASCII_OFFSET));
+			result[i] += (weight * (int) *(matrix + i * digits + j));
 			weight *= BASE;
 		}
 	}
@@ -133,17 +134,15 @@ int* charMatrixToIntArray(char* matrix, int n, unsigned int digits){
 //       indexes)
 //       https://www.tutorialspoint.com/how-to-dynamically-allocate-a-2d-array-in-c
 char* intArrayToCharMatrix(int* array, int n, unsigned int digits){
-	int columns = digits + 1;
 	// Matrix's dinamic allocation
-	char* result = (char*) malloc(sizeof(char) * columns * n);
+	char* result = (char*) malloc(sizeof(char) * digits * n);
     // fill the matrix with the array's numbers
     int i;
 	for(i = 0; i < n; i++){
 		int number = array[i];
-		*(result + i * columns + digits) = '\0';
 		int j;
 		for(j = 0; j < digits; j++){
-			*(result + i * columns + j) = (number % BASE) + (int) ASCII_OFFSET;
+			*(result + i * digits + j) = (number % BASE);
 			number /= BASE;
 		}
 	}
