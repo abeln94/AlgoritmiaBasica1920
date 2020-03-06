@@ -11,8 +11,11 @@
  * 	array[i]=123 => martix[i][0]=3; matrix[i][1]=2; matrix[i][2]=1
  * 
  * It's obviated in this explanation the '\0' character of end of string 
- * in C, so in fact each rows sizes DIGITS+1, being the last of them the 
- * mentioned character.
+ * in C, because the rows are not strings. Each position in the row n 
+ * of the matrix represents a digit of the n-th number in the array, but 
+ * although them are stored into char variables, they are codified with 
+ * the binary unsigned number of the digit, not with the ASCII code of 
+ * that number
  */
 
 /**
