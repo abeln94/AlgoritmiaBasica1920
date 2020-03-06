@@ -45,6 +45,13 @@
  *    (although it suposes being unreadable) can be used as ASCII value, 
  *    so that all these additions and subtractions of the offsets can be 
  *    avoided
+ * -> as consequence of the two previous points, the representation of 
+ *    the numbers into the matrix's rows can be optimized making each 
+ *    digit representation turns into its decimal value as char and not 
+ *    the ASCII one. At that point, as no characters are representated, 
+ *    string compatibility can be avoided, so '\0' at the end of each 
+ *    row can be omited, turning the (n x (digits + 1)) matrix into a 
+ *    (n x digits) one
  */
 void radixSort(char* v, int n, unsigned int digits){
 	int columns = digits + 1;
