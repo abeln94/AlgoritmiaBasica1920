@@ -97,7 +97,7 @@ void radixSort(char* v, int n, unsigned int digits){
 		}
 	}
 #ifndef USE_STACK
-	free(auxiliar);
+	//free(auxiliar);
 #endif
 }
 
