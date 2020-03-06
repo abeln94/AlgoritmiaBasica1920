@@ -120,6 +120,11 @@ int* charMatrixToIntArray(char** matrix, int n, unsigned int digits){
 // sequence
 // Coms: helpful link
 // 		 https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/
+//       ...alternative representation emulating matrix
+//       https://stackoverflow.com/questions/2128728/allocate-matrix-in-c
+//       ...this last representation with only pointer operations (not 
+//       indexes)
+//       https://www.tutorialspoint.com/how-to-dynamically-allocate-a-2d-array-in-c
 char** intArrayToCharMatrix(int* array, int n, unsigned int digits){
 	// Matrix's dinamic allocation
 	char** result = (char**) malloc(sizeof(char *) * n + sizeof(char) * (digits + 1) * n);
