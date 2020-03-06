@@ -40,6 +40,11 @@
  *    correctly ended with '\0', so many memory can be saved without 
  *    allocating the byte destinated to store the '\0' character that 
  *    won't be used for sorting
+ * -> characters in the matrix don't have to match the ASCII 
+ *    representation of the digits; this way, its value as decimal 
+ *    (although it suposes being unreadable) can be used as ASCII value, 
+ *    so that all these additions and subtractions of the offsets can be 
+ *    avoided
  */
 void radixSort(char* v, int n, unsigned int digits){
 	int columns = digits + 1;
