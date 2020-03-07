@@ -5,10 +5,12 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include <thread>
 
 using namespace std;
 
 #define BASE 10
+#define NUM_THREADS 4
 
 #define SWAP(a, b) auto c = a; a = b; b = c
 
@@ -117,6 +119,13 @@ int generateRandomNumber(int digits) {
 
 // -------------------- SORT --------------------
 
+void thread_count(radix_struct &elements, int count[NUM_THREADS][BASE], int digit, int id) {
+    for (int i = id; i < elements.n; i += NUM_THREADS) {
+        count[id][elements.digit(i, digit)]++;
+    }
+}
+
+
 /**
  * Sorts the array based on the specified digit of the numbers.
  * Local order is kept
@@ -126,19 +135,29 @@ int generateRandomNumber(int digits) {
 void sortByDigit(radix_struct &elements, int digit) {
 
     // count number of each digit O(n)
-    int count[BASE] = {0};
-    for (int i = 0; i < elements.n; ++i) {
-        count[elements.digit(i, digit)]++;
+    int count[NUM_THREADS][BASE] = {0};
+    thread threads[NUM_THREADS];
+
+    for (int t = 0; t < NUM_THREADS; ++t) {
+        threads[t] = thread(thread_count, ref(elements), count, digit, t);
+    }
+    for (auto &thread : threads) {
+        thread.join();
+    }
+    for (int t = 1; t < NUM_THREADS; ++t) {
+        for (int i = 0; i < BASE; ++i) {
+            count[0][i] += count[t][i];
+        }
     }
 
     // convert count to accumulate O(BASE) (BASE << n)
     for (int i = 1; i < BASE; ++i) {
-        count[i] += count[i - 1];
+        count[0][i] += count[0][i - 1];
     }
 
     // copy to new array in order O(n)
     for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --count[elements.digit(i, digit)];
+        int pos = --count[0][elements.digit(i, digit)];
         elements.changeOrder(i, pos);
     }
 
