@@ -31,7 +31,6 @@ echo "<<< DONE <<<"
 echo
 
 # execute
-set +e # bug: ssh returns error code 1 for unknown reasons
 echo ">>> EXECUTING >>>"
 ssh -tt $SERVER << EOF
 
@@ -39,14 +38,10 @@ ssh -tt $SERVER << EOF
   cd $REMOTE_FOLDER
   make
   $RUNNABLE
+  set +e
   exit 0
 EOF
 echo "<<< DONE <<<"
-echo
-if [[ $? != 0 && $? != 1 ]]; then
-  exit $?
-fi
-set -e
 
 # donwload results
 echo ">>> DOWNLOADING FILES >>>"
