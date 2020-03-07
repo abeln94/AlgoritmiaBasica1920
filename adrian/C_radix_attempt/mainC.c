@@ -21,18 +21,19 @@ void printArray(int* array, int n){
 
 int main(){
 	const int N = 15;
+	const int DIGITS = 5;
 	int example[] = {54321, 123, 4837, 210, 333, 2516, 8138, 3, 47, 456, 789, 102, 0, 5, 27};
 	// test int array to matrix conversion
-	char* converted = intArrayToCharMatrix(example, N, 5);
-	//printMatrix(converted, N, 5);
+	char* converted = intArrayToCharMatrix(example, N, DIGITS);
+	//printMatrix(converted, N, DIGITS);
 	// test matrix to int array conversion
-	int* reconverted = charMatrixToIntArray(converted, N, 5);
+	int* reconverted = charMatrixToIntArray(converted, N, DIGITS);
 	printArray(reconverted,N);
 	// test sorting
 	printf("-> Attempt of sorting\n");
-	radixSort(converted, N, 5);
-	//printMatrix(converted, N, 5);
-	reconverted = charMatrixToIntArray(converted, N, 5);
+	radixSort(converted, N, DIGITS);
+	//printMatrix(converted, N, DIGITS);
+	reconverted = charMatrixToIntArray(converted, N, DIGITS);
 	printArray(reconverted,N);
 	
 	return 0;

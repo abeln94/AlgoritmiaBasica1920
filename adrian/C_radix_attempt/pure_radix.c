@@ -1,5 +1,30 @@
 #include <stdlib.h>
 #include "pure_radix.h"
+// DEBUG
+#include <stdio.h>
+
+void printMatrixDebug(char* matrix, int n, int digits, char* message) {
+	int* array = charMatrixToIntArray(matrix,n,digits);
+	printf("-> %s; %d elements; %d digits\n",message,n,digits);
+	int i;
+	for(i = 0; i < n; i++) {
+		printf("%d\n",array[i]);
+	}
+}
+
+void printArrayDebug(int* array, int n, char* message) {
+	printf("~> %s\n",message);
+	int i;
+	for(i = 0; i < n; i++) {
+		printf("-> %s; %d elements\n",message,n);
+	}
+}
+
+void printMessageDebug(char* message) {
+	printf("=> %s\n",message);
+}
+
+// /DEBUG
 
 // Comment the following line to implement auxiliar array of radix sort using dynamic allocation instead of call stack one
 #define USE_STACK
@@ -59,7 +84,8 @@ void radixSort(char* v, int n, unsigned int digits){
 	char* auxiliar = axlr; // https://www.tutorialspoint.com/cprogramming/c_pointer_to_an_array.htm -> using array directly causes types incompatibility
 #else
 	// system call for dynamic allocation
-	char* auxiliar = (char*) malloc(sizeof(char) * digits * n);
+	char* axlr = (char*) malloc(sizeof(char) * digits * n);
+	char* auxiliar = axlr;
 #endif
 	// Defining pointer to original array, that lets use its reference swapping it while sorting
 	char* original = v;
@@ -70,7 +96,7 @@ void radixSort(char* v, int n, unsigned int digits){
 		unsigned int count[BASE] = {0};
 		// counts the number of occurrences of each digit
 		for(i = 0; i < n; i++) {
-			count[(unsigned char) *(v + i * digits + j)]++;
+			count[(unsigned char) *(original + i * digits + j)]++;
 		}
 		// prepares base position after count
 		for(i = 1; i < BASE; i++) {
@@ -78,27 +104,42 @@ void radixSort(char* v, int n, unsigned int digits){
 		}
 		// sort v into auxiliar
 		for(i = n - 1; i >= 0; i--) {
-			int row = --count[(unsigned char) *(v + i * digits + j)];
+			int row = --count[(unsigned char) *(original + i * digits + j)];
 			for(k = 0; k < digits; k++){ 
-				*(auxiliar + row * digits + k) = *(v + i * digits + k);
+				*(auxiliar + row * digits + k) = *(original + i * digits + k);
 			}
 		}
 		// swap array's pointers	
-		char* aux = v;
-		v = auxiliar;
+		char* aux = original;
+		original = auxiliar;
 		auxiliar = aux;
 	}
+	// DEBUG
+	printMatrixDebug(v,n,digits,"Before copy");
+	// /DEBUG
 	// Check if last array used as sorted isn't the given one and all elements have to be copied before return
 	if(original != v){
 		for(i = 0; i < n; i++){
 			for(j = 0; j < digits; j++){
-				*(v + i * digits + j) = *(auxiliar + i * digits + j);
+				*(v + i * digits + j) = *(axlr + i * digits + j);
 			}
 		}
+		// DEBUG
+		printMessageDebug("I've copied the array because the number of digits wasn't even");
+		// /DEBUG
 	}
+	// DEBUG
+	printMatrixDebug(v,n,digits,"Exactly after copy");
+	// /DEBUG
 #ifndef USE_STACK
-	//free(auxiliar);
+	free(axlr);
+	// DEBUG
+	printMessageDebug("I've free the dynamic allocation");
+	// /DEBUG
 #endif
+	// DEBUG
+	printMatrixDebug(v,n,digits,"Exactly after free");
+	// /DEBUG
 }
 
 // Given a matrix of N rows and digits columns, returns an array of 
