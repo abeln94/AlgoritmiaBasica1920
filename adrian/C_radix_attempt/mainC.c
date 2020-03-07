@@ -20,8 +20,8 @@ void printArray(int* array, int n){
 }
 
 int main(){
-	const int N = 8;
-	int example[] = {123, 456, 789, 102, 0, 5, 27, 54321};
+	const int N = 15;
+	int example[] = {54321, 123, 4837, 210, 333, 2516, 8138, 3, 47, 456, 789, 102, 0, 5, 27};
 	// test int array to matrix conversion
 	char* converted = intArrayToCharMatrix(example, N, 5);
 	//printMatrix(converted, N, 5);
