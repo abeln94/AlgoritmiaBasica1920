@@ -1,30 +1,5 @@
 #include <stdlib.h>
 #include "pure_radix.h"
-// DEBUG
-#include <stdio.h>
-
-void printMatrixDebug(char* matrix, int n, int digits, char* message) {
-	int* array = charMatrixToIntArray(matrix,n,digits);
-	printf("-> %s; %d elements; %d digits\n",message,n,digits);
-	int i;
-	for(i = 0; i < n; i++) {
-		printf("%d\n",array[i]);
-	}
-}
-
-void printArrayDebug(int* array, int n, char* message) {
-	printf("~> %s\n",message);
-	int i;
-	for(i = 0; i < n; i++) {
-		printf("-> %s; %d elements\n",message,n);
-	}
-}
-
-void printMessageDebug(char* message) {
-	printf("=> %s\n",message);
-}
-
-// /DEBUG
 
 // Comment the following line to implement auxiliar array of radix sort using dynamic allocation instead of call stack one
 #define USE_STACK
@@ -114,9 +89,6 @@ void radixSort(char* v, int n, unsigned int digits){
 		original = auxiliar;
 		auxiliar = aux;
 	}
-	// DEBUG
-	printMatrixDebug(v,n,digits,"Before copy");
-	// /DEBUG
 	// Check if last array used as sorted isn't the given one and all elements have to be copied before return
 	if(original != v){
 		for(i = 0; i < n; i++){
@@ -124,22 +96,10 @@ void radixSort(char* v, int n, unsigned int digits){
 				*(v + i * digits + j) = *(axlr + i * digits + j);
 			}
 		}
-		// DEBUG
-		printMessageDebug("I've copied the array because the number of digits wasn't even");
-		// /DEBUG
 	}
-	// DEBUG
-	printMatrixDebug(v,n,digits,"Exactly after copy");
-	// /DEBUG
 #ifndef USE_STACK
 	free(axlr);
-	// DEBUG
-	printMessageDebug("I've free the dynamic allocation");
-	// /DEBUG
 #endif
-	// DEBUG
-	printMatrixDebug(v,n,digits,"Exactly after free");
-	// /DEBUG
 }
 
 // Given a matrix of N rows and digits columns, returns an array of 
