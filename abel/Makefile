@@ -8,7 +8,7 @@ CC = g++         # compiler
 EJEC = main
 #---------------------------------------------------------
 # Flags
-CPPFLAGS=-I. -std=c++11 -fmax-errors=1 -O3 # opciones compilación
+CPPFLAGS=-I. -std=c++11 -fmax-errors=1 -Ofast -ftracer -funroll-loops # opciones compilación
 #---------------------------------------------------------
 
 all: ${EJEC} #lo que se generará al ejecutar "make"

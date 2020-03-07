@@ -24,7 +24,6 @@ struct radix_struct {
     char **array;
     int *order;
     int *order_temp;
-    int *count[BASE];
     int digits;
     int n;
 
@@ -51,10 +50,6 @@ struct radix_struct {
         for (int i = 0; i < n; ++i) {
             order[i] = i;
         }
-
-        for (auto &i : count) {
-            i = new int[digits] {0};
-        }
     }
 
     ~radix_struct() {
@@ -64,10 +59,6 @@ struct radix_struct {
         delete[] array;
         delete[] order;
         delete[] order_temp;
-
-        for (auto &i : count) {
-            delete[] i;
-        }
     }
 
     /**
@@ -127,27 +118,6 @@ int generateRandomNumber(int digits) {
 // -------------------- SORT --------------------
 
 /**
- * Counts the number of digits for each element
- * @param elements struct with elements, input and output
- */
-void countDigits(radix_struct &elements) {
-
-    // count
-    for (int i = 0; i < elements.n; ++i) {
-        for (int digit = 0; digit < elements.digits; ++digit) {
-            elements.count[elements.digit(i, digit)][digit]++;
-        }
-    }
-
-    // convert count to accumulate O(BASE) (BASE << n)
-    for (int b = 1; b < BASE; ++b) {
-        for (int digit = 0; digit < elements.digits; ++digit) {
-            elements.count[b][digit] += elements.count[b-1][digit];
-        }
-    }
-}
-
-/**
  * Sorts the array based on the specified digit of the numbers.
  * Local order is kept
  * @param elements struct with elements, input and output
@@ -155,9 +125,20 @@ void countDigits(radix_struct &elements) {
  */
 void sortByDigit(radix_struct &elements, int digit) {
 
+    // count number of each digit O(n)
+    int count[BASE] = {0};
+    for (int i = 0; i < elements.n; ++i) {
+        count[elements.digit(i, digit)]++;
+    }
+
+    // convert count to accumulate O(BASE) (BASE << n)
+    for (int i = 1; i < BASE; ++i) {
+        count[i] += count[i - 1];
+    }
+
     // copy to new array in order O(n)
     for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --elements.count[elements.digit(i, digit)][digit];
+        int pos = --count[elements.digit(i, digit)];
         elements.changeOrder(i, pos);
     }
 
@@ -170,7 +151,6 @@ void sortByDigit(radix_struct &elements, int digit) {
  * @param elements struct with elements, input and output
  */
 void sortByRadix(radix_struct &elements) {
-    countDigits(elements);
     for (int d = 0; d < elements.digits; ++d) {
         sortByDigit(elements, d);
     }
@@ -231,7 +211,7 @@ int main() {
     int REPEAT = 10;
 
     for (int digits = 1; digits <= 9; digits++) {
-        for (int N = 5000; N <= 50000; N += 10000) {
+        for (int N = 5000; N <= 50000; N += 5000) {
             cout << "\rdigits=" << digits << ", N=" << N << flush;
             int time_our = 0;
             int time_std = 0;
