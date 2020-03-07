@@ -26,6 +26,7 @@ struct radix_struct {
     char **array;
     int *order;
     int *order_temp;
+    int *count[NUM_THREADS][BASE];
     int digits;
     int n;
 
@@ -52,6 +53,12 @@ struct radix_struct {
         for (int i = 0; i < n; ++i) {
             order[i] = i;
         }
+
+        for (auto &i : count) {
+            for (auto &j : i) {
+                j = new int[digits]{0};
+            }
+        }
     }
 
     ~radix_struct() {
@@ -61,6 +68,12 @@ struct radix_struct {
         delete[] array;
         delete[] order;
         delete[] order_temp;
+
+        for (auto &i : count) {
+            for (auto &j : i) {
+                delete[] j;
+            }
+        }
     }
 
     /**
@@ -119,9 +132,41 @@ int generateRandomNumber(int digits) {
 
 // -------------------- SORT --------------------
 
-void thread_count(radix_struct &elements, int count[NUM_THREADS][BASE], int digit, int id) {
+void thread_count(radix_struct &elements, int id) {
     for (int i = id; i < elements.n; i += NUM_THREADS) {
-        count[id][elements.digit(i, digit)]++;
+        for (int digit = 0; digit < elements.digits; ++digit) {
+            elements.count[id][elements.digit(i, digit)][digit]++;
+        }
+    }
+}
+
+/**
+ * Counts the number of digits for each element
+ * @param elements struct with elements, input and output
+ */
+void countDigits(radix_struct &elements) {
+
+    thread threads[NUM_THREADS];
+
+    for (int t = 0; t < NUM_THREADS; ++t) {
+        threads[t] = thread(thread_count, ref(elements), t);
+    }
+    for (auto &thread : threads) {
+        thread.join();
+    }
+    for (int t = 1; t < NUM_THREADS; ++t) {
+        for (int i = 0; i < BASE; ++i) {
+            for (int d = 0; d < elements.digits; ++d) {
+                elements.count[0][i][d] += elements.count[t][i][d];
+            }
+        }
+    }
+
+    // convert count to accumulate O(BASE) (BASE << n)
+    for (int b = 1; b < BASE; ++b) {
+        for (int digit = 0; digit < elements.digits; ++digit) {
+            elements.count[0][b][digit] += elements.count[0][b - 1][digit];
+        }
     }
 }
 
@@ -134,30 +179,9 @@ void thread_count(radix_struct &elements, int count[NUM_THREADS][BASE], int digi
  */
 void sortByDigit(radix_struct &elements, int digit) {
 
-    // count number of each digit O(n)
-    int count[NUM_THREADS][BASE] = {0};
-    thread threads[NUM_THREADS];
-
-    for (int t = 0; t < NUM_THREADS; ++t) {
-        threads[t] = thread(thread_count, ref(elements), count, digit, t);
-    }
-    for (auto &thread : threads) {
-        thread.join();
-    }
-    for (int t = 1; t < NUM_THREADS; ++t) {
-        for (int i = 0; i < BASE; ++i) {
-            count[0][i] += count[t][i];
-        }
-    }
-
-    // convert count to accumulate O(BASE) (BASE << n)
-    for (int i = 1; i < BASE; ++i) {
-        count[0][i] += count[0][i - 1];
-    }
-
     // copy to new array in order O(n)
     for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --count[0][elements.digit(i, digit)];
+        int pos = --elements.count[0][elements.digit(i, digit)][digit];
         elements.changeOrder(i, pos);
     }
 
@@ -170,6 +194,7 @@ void sortByDigit(radix_struct &elements, int digit) {
  * @param elements struct with elements, input and output
  */
 void sortByRadix(radix_struct &elements) {
+    countDigits(elements);
     for (int d = 0; d < elements.digits; ++d) {
         sortByDigit(elements, d);
     }
