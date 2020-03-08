@@ -12,6 +12,10 @@
 // Sorts array using radix sort
 /*
  * TIPS OF IMPLEMENTATION:
+ * Starting on basis of the given representation of radix sort...
+ * => SEQUENTIAL OPTIMIZATIONS
+ * -> instead of using queues for each base's value counting of digits, 
+ *    an array with base's number of values dimension is used
  * -> dynamic allocation's system calls are expensive in time, so them 
  *    are executed once, reserving space for array location at the 
  *    begining (this array is reused for each iteration of sorting) and 
@@ -51,6 +55,42 @@
  *    string compatibility can be avoided, so '\0' at the end of each 
  *    row can be omited, turning the (n x (digits + 1)) matrix into a 
  *    (n x digits) one
+ * -> instead of using both integers and pointers to index the matrices, 
+ *    only pointers would be used, because it's the way the effective 
+ *    access to its elements is done, so that the calculus binded to the 
+ *    logical representation asociated to integers could be 
+ *    precalculated, avoiding it for each iteration and reducing 
+ *    indexation time (taking into consideration a compiler's optimizer 
+ *    smart enough should be doing it whithout programming it 
+ *    explicitly, it's done due to the age of the compiler's version)
+ * => PARALLEL OPTIMIZATIONS
+ *    -Taking into consideration radix sort's three phases for each digit
+ *    1) Counting the number of apearences of each value of the basis 
+ *       into observed digit's position of the array's integers
+ *       observated of the array
+ *    2) Acumulating for each value of the basis the count of the 
+ *       previous one to establish the array's top positions when 
+ *       sorting
+ *    3) Sort the array's numbers copying each one into an auxiliar one, 
+ *       with index the number given by the accumulation array
+ *    -While third phase must be sequential, the first two might not, so 
+ *    some optimizations based on parallelize its calculus can be done. 
+ *    These optimizations will work properly for large size of the array 
+ *    given to be sorted, because time inverted into system calls to 
+ *    create and throw the threads should not be ignored. Remember a 
+ *    successful multithread execution is only achieved when the number 
+ *    of threads created is equal to the number of cores of the CPU used
+ * ~> calculate the two first phases dividing the N numbers array given 
+ *    per number of cores of the processor. This will work specially 
+ *    better than other divisions when the number of values of the basis 
+ *    is not a multiple of the number of cores
+ * ~> calculate the two first phases each iteration calculating such 
+ *    many digits as the number of cores of the processor has, 
+ *    simultaneously, so that the third phase is executed that number of 
+ *    times when the first and the second one end
+ * ~> calculate the two first phases giving each thread such many values 
+ *    of the basis as the number of values the basis has divided per the 
+ *    number of cores
  */
 void radixSort(char* v, int n, unsigned int digits){
 	// Allocation of auxiliar "v", the array to sort in each iteration
