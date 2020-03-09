@@ -56,4 +56,5 @@ echo "<<< DONE <<<"
 echo
 
 # end
+echo "Exiting..."
 sleep 5
