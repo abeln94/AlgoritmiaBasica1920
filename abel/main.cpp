@@ -135,7 +135,10 @@ int generateRandomNumber(int digits) {
 void thread_count(radix_struct &elements, int id) {
 
     // count digits O(n*digits)
-    for (int i = id; i < elements.n; i += NUM_THREADS) {
+    int start = (elements.n / NUM_THREADS) * id + (elements.n % NUM_THREADS > id ? id : elements.n % NUM_THREADS);
+    int end = (elements.n / NUM_THREADS) * (id + 1) + (elements.n % NUM_THREADS > (id + 1) ? (id + 1) : elements.n % NUM_THREADS);
+
+    for (int i = start; i < end; i++) {
         for (int digit = 0; digit < elements.digits; ++digit) {
             elements.count[id][elements.digit(i, digit)][digit]++;
         }
