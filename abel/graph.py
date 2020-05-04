@@ -13,6 +13,9 @@ for digit in range(1, 9 + 1):
     plt.subplot(3, 3, digit)
     plt.title('{} digit{}'.format(digit, '' if digit == 1 else 's'))
 
+    if not any(indexes):
+        continue
+
     pol = np.polyfit(Ns[indexes], times_our[indexes], 1)
     Ev = lambda x: pol[1] + pol[0] * x
 
