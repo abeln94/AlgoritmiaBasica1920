@@ -24,7 +24,7 @@ for digit in range(1, 9 + 1):
     print(m, "->", Ev(m))
 
     plt.plot(Ns[indexes], times_our[indexes])  # blue: our
-    plt.plot(Ns[indexes], [Ev(x) for x in Ns[indexes]], color='r')  # red: our fit (line)
+    # plt.plot(Ns[indexes], [Ev(x) for x in Ns[indexes]], color='r')  # red: our fit (line)
     plt.plot(Ns[indexes], times_std[indexes], color='g')  # green: their
 plt.tight_layout()
 plt.show()

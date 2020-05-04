@@ -11,6 +11,12 @@ using namespace std;
 
 #define BASE 10
 #define NUM_THREADS 4
+#define MAX_DIGITS 9
+
+
+#define N_FIRST 50000
+#define N_LAST 500000
+#define N_STEP 10000
 
 #define SWAP(a, b) auto c = a; a = b; b = c
 
@@ -19,16 +25,18 @@ using namespace std;
 /**
  * Struct for sorting with radix
  */
-struct radix_struct {
+//struct radix_struct {
     /**
      * The digits
      */
-    char **array;
-    int *order;
-    int *order_temp;
-    int *count[NUM_THREADS][BASE];
-    int digits;
-    int n;
+    char data_array[MAX_DIGITS][N_LAST + 1];
+    int *data_order;
+    int *data_order_temp;
+    int data_order_a[N_LAST + 1];
+    int data_order_b[N_LAST + 1];
+    int data_count[NUM_THREADS][BASE][MAX_DIGITS];
+    int data_digits;
+    int data_n;
 
     /**
      * Constructor
@@ -36,66 +44,55 @@ struct radix_struct {
      * @param n number of elements
      * @param numbers Array of numbers to convert
      */
-    radix_struct(int digits, int n, const int numbers[]) {
-        this->digits = digits;
-        this->n = n;
+    void initialize(int _digits, int _n, const int numbers[]) {
+        data_digits = _digits;
+        data_n = _n;
 
-        array = new char *[digits];
-        for (int i = 0; i < digits; ++i) {
-            array[i] = new char[n];
-            for (int j = 0; j < n; j++) {
-                array[i][j] = (numbers[j] / (int) pow(BASE, i)) % BASE;
+        for (int i = 0; i < data_digits; ++i) {
+            for (int j = 0; j < data_n; j++) {
+                data_array[i][j] = (numbers[j] / (int) pow(BASE, i)) % BASE;
             }
         }
 
-        order = new int[n];
-        order_temp = new int[n];
-        for (int i = 0; i < n; ++i) {
-            order[i] = i;
+        for (int i = 0; i < data_n; ++i) {
+            data_order_a[i] = i;
         }
 
-        for (auto &i : count) {
-            for (auto &j : i) {
-                j = new int[digits]{0};
-            }
-        }
-    }
+        data_order = data_order_a;
+        data_order_temp = data_order_b;
 
-    ~radix_struct() {
-        for (int i = 0; i < digits; ++i) {
-            delete[] array[i];
-        }
-        delete[] array;
-        delete[] order;
-        delete[] order_temp;
-
-        for (auto &i : count) {
-            for (auto &j : i) {
-                delete[] j;
+        for (int i = 0; i < NUM_THREADS; ++i) {
+            for (int j = 0; j < BASE; ++j) {
+                for (int k = 0; k < data_digits; ++k) {
+                    data_count[i][j][k] = 0;
+                }
             }
         }
     }
 
-    /**
-     * @param element which elements
-     * @return the corresponding element as int
-     */
-    int operator[](int element) const {
-        int i = 0;
-        for (int d = digits - 1; d >= 0; --d) {
-            i = i * BASE + digit(element, d);
-        }
-        return i;
-    }
 
     /**
      * @param element which element
      * @param digit which digit
      * @return the corresponding digit
      */
-    char digit(int element, int digit) const {
-        return array[digit][order[element]];
+    char get_digit(int element, int digit) {
+        return data_array[digit][data_order[element]];
     }
+
+struct {
+    /**
+     * @param element which elements
+     * @return the corresponding element as int
+     */
+    int operator[](int element) const {
+        int i = 0;
+        for (int d = data_digits - 1; d >= 0; --d) {
+            i = i * BASE + get_digit(element, d);
+        }
+        return i;
+    }
+} printer;
 
     /**
      * Moves the element from position 'from' to position 'to'
@@ -104,17 +101,17 @@ struct radix_struct {
      * @param to final position of element
      */
     void changeOrder(int from, int to) {
-        order_temp[to] = order[from];
+        data_order_temp[to] = data_order[from];
     }
 
     /**
      * Makes changes from changeOrder final so they are visible to the other functions
      */
     void commitOrderChanges() {
-        SWAP(order, order_temp);
+        SWAP(data_order, data_order_temp);
     }
 
-};
+//};
 
 // -------------------- RANDOM --------------------
 
@@ -132,22 +129,22 @@ int generateRandomNumber(int digits) {
 
 // -------------------- SORT --------------------
 
-void thread_count(radix_struct &elements, int id) {
+void thread_count(int id) {
 
     // count digits O(n*digits)
-    int start = (elements.n / NUM_THREADS) * id + (elements.n % NUM_THREADS > id ? id : elements.n % NUM_THREADS);
-    int end = (elements.n / NUM_THREADS) * (id + 1) + (elements.n % NUM_THREADS > (id + 1) ? (id + 1) : elements.n % NUM_THREADS);
+    int start = (data_n / NUM_THREADS) * id + (data_n % NUM_THREADS > id ? id : data_n % NUM_THREADS);
+    int end = (data_n / NUM_THREADS) * (id + 1) + (data_n % NUM_THREADS > (id + 1) ? (id + 1) : data_n % NUM_THREADS);
 
     for (int i = start; i < end; i++) {
-        for (int digit = 0; digit < elements.digits; ++digit) {
-            elements.count[id][elements.digit(i, digit)][digit]++;
+        for (int digit = 0; digit < data_digits; ++digit) {
+            data_count[id][get_digit(i, digit)][digit]++;
         }
     }
 
     // convert count to accumulate O(BASE*digits)
     for (int b = 1; b < BASE; ++b) {
-        for (int digit = 0; digit < elements.digits; ++digit) {
-            elements.count[id][b][digit] += elements.count[id][b - 1][digit];
+        for (int digit = 0; digit < data_digits; ++digit) {
+            data_count[id][b][digit] += data_count[id][b - 1][digit];
         }
     }
 }
@@ -156,12 +153,12 @@ void thread_count(radix_struct &elements, int id) {
  * Counts the number of digits for each element
  * @param elements struct with elements, input and output
  */
-void countDigits(radix_struct &elements) {
+void countDigits() {
 
     // launch threads to count
     thread threads[NUM_THREADS];
     for (int t = 0; t < NUM_THREADS; ++t) {
-        threads[t] = thread(thread_count, ref(elements), t);
+        threads[t] = thread(thread_count, t);
     }
     for (auto &thread : threads) {
         thread.join();
@@ -170,8 +167,8 @@ void countDigits(radix_struct &elements) {
     // accumulate all into first O(threads*base*digits)
     for (int t = 1; t < NUM_THREADS; ++t) {
         for (int i = 0; i < BASE; ++i) {
-            for (int d = 0; d < elements.digits; ++d) {
-                elements.count[0][i][d] += elements.count[t][i][d];
+            for (int d = 0; d < data_digits; ++d) {
+                data_count[0][i][d] += data_count[t][i][d];
             }
         }
     }
@@ -184,26 +181,26 @@ void countDigits(radix_struct &elements) {
  * @param elements struct with elements, input and output
  * @param digit digit to sort (0=less significative)
  */
-void sortByDigit(radix_struct &elements, int digit) {
+void sortByDigit(int digit) {
 
     // copy to new array in order O(n)
-    for (int i = elements.n - 1; i >= 0; --i) {
-        int pos = --elements.count[0][elements.digit(i, digit)][digit];
-        elements.changeOrder(i, pos);
+    for (int i = data_n - 1; i >= 0; --i) {
+        int pos = --data_count[0][get_digit(i, digit)][digit];
+        changeOrder(i, pos);
     }
 
     // move from temp to array O(1)
-    elements.commitOrderChanges();
+    commitOrderChanges();
 }
 
 /**
  * Sorts an array of integers by using radix sort
  * @param elements struct with elements, input and output
  */
-void sortByRadix(radix_struct &elements) {
-    countDigits(elements);
-    for (int d = 0; d < elements.digits; ++d) {
-        sortByDigit(elements, d);
+void sortByRadix() {
+    countDigits();
+    for (int d = 0; d < data_digits; ++d) {
+        sortByDigit(d);
     }
 }
 
@@ -243,6 +240,8 @@ void print(T v, int n) {
 
 // -------------------- MAIN --------------------
 
+int data_std[N_LAST + 1];
+
 int main() {
 
 #ifdef USING_DEBUG
@@ -251,8 +250,9 @@ int main() {
     cout << "############################" << endl;
 
     int n[] = {34, 12, 4};
-    radix_struct s(2, 3, n);
-    sortByRadix(s);
+    initialize(2, 3, n);
+    sortByRadix();
+    print(printer, data_n);
 #endif
 
     ofstream output;
@@ -261,27 +261,25 @@ int main() {
     // define
     int REPEAT = 10;
 
-    for (int digits = 1; digits <= 9; digits++) {
-        for (int N = 5000; N <= 50000; N += 5000) {
+    for (int digits = 1; digits <= MAX_DIGITS; digits++) {
+        for (int N = N_FIRST; N <= N_LAST; N += N_STEP) {
             cout << "\rdigits=" << digits << ", N=" << N << flush;
             int time_our = 0;
             int time_std = 0;
             for (int t = 0; t < REPEAT; ++t) {
-
                 // generate random vector
-                int data_std[N];
                 for (int i = 0; i < N; ++i) {
                     data_std[i] = generateRandomNumber(digits);
                 }
-                radix_struct data_our(digits, N, data_std);
+                initialize(digits, N, data_std);
 //        print(data_std, N);
 
                 // sort
-                time_our += Measure([&data_our] {
-                    sortByRadix(data_our);
+                time_our += Measure([] {
+                    sortByRadix();
                 });
 
-                time_std += Measure([&data_std, N] {
+                time_std += Measure([N] {
                     sort(data_std, data_std + N);
                 });
 
@@ -289,9 +287,9 @@ int main() {
 
                 // check
                 for (int i = 0; i < N - 1; ++i) {
-                    if (data_our[i] > data_our[i + 1]) {
+                    if (printer[i] > printer[i + 1]) {
                         cout << "data_our not sorted: ";
-                        print(data_our, N);
+                        print(printer, N);
                         return -1;
                     }
                     if (data_std[i] > data_std[i + 1]) {
