@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(algoritmia1)
-project(algoritmia2)
+project(algoritmia)
 
 set(CMAKE_CXX_STANDARD 17)
 
