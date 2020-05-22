@@ -149,7 +149,7 @@ void execute(const string &filenameIn) {
         // execute
         float seconds = (float) Measure([] { solve(); }) / 1000.0f / 1000.0f;
 
-        cout << bestcost << ' ' << seconds << endl;
+        cout << n + 1 << '/' << N << " : " << bestcost << ' ' << seconds << endl;
         solution << bestcost << ' ' << seconds << endl;
 
     }
