@@ -11,10 +11,27 @@
 
 using namespace std;
 
+// -------------------- MEASURE --------------------
+
+/**
+ * Measures time of execution of code
+ * @param action code to execute and measure
+ * @return the time it took as microseconds
+ */
+int Measure(const function<void()> &action) {
+    if (action == nullptr) return 0;
+
+    auto start = chrono::high_resolution_clock::now();
+    action();
+    auto end = chrono::high_resolution_clock::now();
+
+    return chrono::duration_cast<chrono::microseconds>(end - start).count();
+}
+
+// -------------------- ALGORITHM --------------------
+
 
 int N;
-float SOL_time;
-int SOL;
 vector<int> positions_x, positions_y;
 list<int> available, traversed;
 int bestcost, traversedcost;
@@ -66,47 +83,22 @@ void solve() {
     }
 }
 
-// -------------------- MEASURE --------------------
-
-/**
- * Measures time of execution of code
- * @param action code to execute and measure
- * @return the time it took as microseconds
- */
-int Measure(const function<void()> &action) {
-    if (action == nullptr) return 0;
-
-    auto start = chrono::high_resolution_clock::now();
-    action();
-    auto end = chrono::high_resolution_clock::now();
-
-    return chrono::duration_cast<chrono::microseconds>(end - start).count();
-}
-
-
-int main() {
-
-#ifdef USING_DEBUG
-    cout << "############################" << endl;
-    cout << "# Using slow debug version #" << endl;
-    cout << "############################" << endl;
-#endif
-
+void execute(const string &filenameIn) {
     // prepare files
-    ifstream data("prueba.txt");
+    ifstream data(filenameIn);
     if (!data.is_open()) {
-        cout << "Unable to open prueba.txt file";
-        return -1;
+        cout << "Unable to open input file " << filenameIn << endl;
+        return;
     }
 
-    ifstream solution("sol_prueba.txt");
+    string filenameOut = "sol_" + filenameIn;
+    ofstream solution(filenameOut);
     if (!solution.is_open()) {
-        cout << "Unable to open sol_prueba.txt file";
-        return -1;
+        cout << "Unable to open output file " << filenameOut << endl;
+        return;
     }
 
     // read N
-
     data >> N;
 
     for (int n = 0; n < N; ++n) {
@@ -118,7 +110,6 @@ int main() {
         data >> A >> B
              >> pos_x >> pos_y
              >> M;
-        solution >> SOL >> SOL_time;
 
 
         // initialize
@@ -155,18 +146,60 @@ int main() {
         for (int i = 1; i < positions_x.size(); ++i) available.push_back(i);
         traversedcost = 0;
 
-        float our_solution = (float) Measure([] { solve(); }) / 1000.0f / 1000.0f;
+        // execute
+        float seconds = (float) Measure([] { solve(); }) / 1000.0f / 1000.0f;
 
-        cout << "Took " << our_solution << " seconds, base time " << SOL_time << " seconds - ";
+        cout << bestcost << ' ' << seconds << endl;
+        solution << bestcost << ' ' << seconds << endl;
 
-        if (bestcost != SOL) {
-            cout << "INVALID SOLUTION, expected " << SOL << " but returned " << bestcost << endl;
+    }
+}
+
+void compare(const string &filenameOur, const string &filenameBase) {
+
+    // prepare files
+    ifstream our(filenameOur);
+    if (!our.is_open()) {
+        cout << "Unable to open input file " << filenameOur << endl;
+        return;
+    }
+
+    ifstream base(filenameBase);
+    if (!base.is_open()) {
+        cout << "Unable to open output file " << filenameBase << endl;
+        return;
+    }
+
+    int our_sol, base_sol;
+    float our_time, base_time;
+    while (our >> our_sol >> our_time) {
+        base >> base_sol >> base_time;
+
+        cout << "Took " << our_time << " seconds, base time " << base_time << " seconds - ";
+
+        if (our_sol != base_sol) {
+            cout << "INVALID SOLUTION, expected " << base_sol << " but returned " << our_sol << endl;
         } else {
-            cout << "VALID SOLUTION of " << SOL << endl;
+            cout << "VALID SOLUTION of " << base_sol << endl;
         }
 
     }
 
+}
+
+int main() {
+
+#ifdef USING_DEBUG
+    cout << "############################" << endl;
+    cout << "# Using slow debug version #" << endl;
+    cout << "############################" << endl;
+#endif
+
+    execute("prueba.txt");
+
+    compare("sol_prueba.txt", "teacher_sol_prueba.txt");
+
+    execute("test_500_15.txt");
 
     return 0;
 }
