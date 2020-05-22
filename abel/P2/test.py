@@ -1,6 +1,3 @@
-from queue import PriorityQueue
-
-
 def dist(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
@@ -23,7 +20,7 @@ def cost(chosed, available):
         cost = _cost(chosed)
         return cost, cost
 
-    last = chosed[-1] if len(chosed)>0 else initial
+    last = chosed[-1] if len(chosed) > 0 else initial
     far = max(available, key=lambda p: dist(p, last))
     mincost = _cost(chosed + [far])
 
@@ -55,10 +52,9 @@ with open('prueba.txt') as input:
 
             firstcost, cota = cost([], mines)
 
-            nodes = PriorityQueue()
-            nodes.put((firstcost, ([], mines)))
-            while not nodes.empty():
-                thecost, (chosed, available) = nodes.get()
+            nodes = [(firstcost, ([], mines))]
+            while len(nodes) != 0:
+                thecost, (chosed, available) = nodes.pop()
 
                 # poda
                 if thecost > cota: continue
@@ -68,6 +64,7 @@ with open('prueba.txt') as input:
                     bestcost = thecost
                     best = chosed
 
+                nextnodes = []
                 for mine in available:
                     newchosed = chosed.copy()
                     newchosed.append(mine)
@@ -78,10 +75,8 @@ with open('prueba.txt') as input:
 
                     if newcota < cota: cota = newcota
 
-                    nodes.put((newcost, (newchosed, newavailable)))
+                    nextnodes.append((newcost, (newchosed, newavailable)))
+                nextnodes.sort(key=lambda x: x[0], reverse=True)
+                nodes.extend(nextnodes)
 
-            if bestcost != SOL:
-                print()
-            else:
-                print(".")
             print("CORRECTO:" if bestcost == SOL else "ERROR:", f"se esperaba {SOL} y se ha obtenido {bestcost} {best}")
