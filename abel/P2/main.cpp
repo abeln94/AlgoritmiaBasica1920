@@ -8,6 +8,7 @@
 #include <thread>
 #include <stack>
 #include <list>
+#include <cstring>
 
 using namespace std;
 
@@ -16,16 +17,16 @@ using namespace std;
 /**
  * Measures time of execution of code
  * @param action code to execute and measure
- * @return the time it took as microseconds
+ * @return the time it took as seconds
  */
-int Measure(const function<void()> &action) {
+float Measure(const function<void()> &action) {
     if (action == nullptr) return 0;
 
     auto start = chrono::high_resolution_clock::now();
     action();
     auto end = chrono::high_resolution_clock::now();
 
-    return chrono::duration_cast<chrono::microseconds>(end - start).count();
+    return (float) chrono::duration_cast<chrono::microseconds>(end - start).count() / 1000.0f / 1000.0f;
 }
 
 // -------------------- ALGORITHM --------------------
@@ -48,7 +49,7 @@ int dist(int from, int to) {
  */
 void solve() {
     if (available.empty()) {
-        // solution
+        // solution, update best cost
         int localcost = traversedcost + dist(traversed.back(), 0);
         if (localcost < bestcost) {
             bestcost = localcost;
@@ -56,14 +57,18 @@ void solve() {
         return;
     }
 
-    // get next elements, sorted by closest first
-    int last = traversed.back();
-    pair<int, int> sort_available[available.size()];
 
+    // last traversed element
+    int last = traversed.back();
+
+    // get all next elements
+    pair<int, int> sort_available[available.size()];
     int i = 0;
     for (int &nextpos : available) {
         sort_available[i++] = make_pair(dist(last, nextpos), nextpos);
     }
+
+    // sort by closest
     sort(sort_available, sort_available + available.size());
 
     // traverse elements
@@ -72,18 +77,40 @@ void solve() {
 
         int lastcost = dist(last, nextpos);
 
-        traversed.push_back(nextpos);
-        available.remove(nextpos);
+        // check traversed cost
         traversedcost += lastcost;
-        if (traversedcost < bestcost)
+
+        // minimum possible cost is for the closed loop
+        int minimumcost = traversedcost + dist(nextpos, 0);
+
+        // don't traverse if minimum possible cost is bigger than bestcost
+        if (minimumcost < bestcost) {
+            // move as traversed
+            traversed.push_back(nextpos);
+            available.remove(nextpos);
+            // solve
             solve();
+            // restore
+            available.push_back(nextpos);
+            traversed.pop_back();
+        }
+
+        // undo traverse cost
         traversedcost -= lastcost;
-        available.push_back(nextpos);
-        traversed.pop_back();
     }
 }
 
-void execute(const string &filenameIn) {
+void prepare() {
+    bestcost = INT32_MAX;
+
+    traversed.clear();
+    traversed.push_back(0);
+    available.clear();
+    for (int i = 1; i < positions_x.size(); ++i) available.push_back(i);
+    traversedcost = 0;
+}
+
+void executeFile(const string &filenameIn, const string &filenameOut) {
     // prepare files
     ifstream data(filenameIn);
     if (!data.is_open()) {
@@ -91,7 +118,6 @@ void execute(const string &filenameIn) {
         return;
     }
 
-    string filenameOut = "sol_" + filenameIn;
     ofstream solution(filenameOut);
     if (!solution.is_open()) {
         cout << "Unable to open output file " << filenameOut << endl;
@@ -137,21 +163,54 @@ void execute(const string &filenameIn) {
             }
         }
 
-        // more initialize
-        bestcost = INT32_MAX;
-
-        traversed.clear();
-        traversed.push_back(0);
-        available.clear();
-        for (int i = 1; i < positions_x.size(); ++i) available.push_back(i);
-        traversedcost = 0;
+        prepare();
 
         // execute
-        float seconds = (float) Measure([] { solve(); }) / 1000.0f / 1000.0f;
+        float seconds = (float) Measure([] { solve(); });
 
         cout << n + 1 << '/' << N << " : " << bestcost << ' ' << seconds << endl;
         solution << bestcost << ' ' << seconds << endl;
 
+    }
+}
+
+void executeInternal() {
+
+    // fixed length (it is not used per se)
+    N = 20;
+
+    // initialize an array with all possible positions, for random pick
+    int values[N * N];
+    for (int n = 0; n < N; ++n) values[n] = n;
+
+    // execute for different number of positions
+    for (int n = 2; n < 20; ++n) {
+
+        // initialize n data
+        float seconds = 0;
+        int TESTS = 10;
+
+        // execute several tests (for average)
+        for (int t = 0; t < TESTS; ++t) {
+
+            // initialize
+            positions_x.clear();
+            positions_y.clear();
+
+            // add n random positions
+            shuffle(values, values + (N * N), default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
+            for (int p = 0; p < n; ++p) {
+                positions_x.push_back(values[p] / N);
+                positions_y.push_back(values[p] % N);
+            }
+
+            prepare();
+
+            // execute
+            seconds += (float) Measure([] { solve(); });
+
+        }
+        cout << "n=" << n << " seconds=" << seconds / (float) TESTS << endl;
     }
 }
 
@@ -187,7 +246,7 @@ void compare(const string &filenameOur, const string &filenameBase) {
 
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
 #ifdef USING_DEBUG
     cout << "############################" << endl;
@@ -195,11 +254,27 @@ int main() {
     cout << "############################" << endl;
 #endif
 
-    execute("prueba.txt");
+    if (argc == 3) {
+        executeFile(argv[1], argv[2]);
+        return 0;
+    }
 
-    compare("sol_prueba.txt", "teacher_sol_prueba.txt");
+    if (argc == 2 && strcmp(argv[1], "prueba") == 0) {
+        // test
+        executeFile("prueba.txt", "sol_prueba.txt");
+        compare("sol_prueba.txt", "teacher_sol_prueba.txt");
+    }
 
-    execute("test_500_15.txt");
+    if (argc == 2 && strcmp(argv[1], "500") == 0) {
+        // test_500
+        executeFile("test_500_15.txt", "sol_test_500_15.txt");
+    }
+
+    if (argc == 2 && strcmp(argv[1], "range") == 0) {
+        // several tests
+        executeInternal();
+    }
+
 
     return 0;
 }
