@@ -65,37 +65,36 @@ void solve() {
     pair<int, int> sort_available[available.size()];
     int i = 0;
     for (int &nextpos : available) {
-        sort_available[i++] = make_pair(dist(last, nextpos), nextpos);
+        sort_available[i++] = make_pair(dist(last, nextpos) + dist(nextpos, 0), nextpos);
     }
 
     // sort by closest
-    sort(sort_available, sort_available + available.size());
+    sort(sort_available, sort_available + i);
 
     // traverse elements
     for (auto &nextpos_ : sort_available) {
+
+        // early cut: if worst distance is less than best, cut all remaining
+        // repeat each time because bestcost may be updated
+        // no need for another local cut
+        if (traversedcost + sort_available[i - 1].first >= bestcost) break;
+
         int nextpos = nextpos_.second;
 
         int lastcost = dist(last, nextpos);
 
-        // check traversed cost
+
+        // move as traversed
+        traversed.push_back(nextpos);
+        available.remove(nextpos);
         traversedcost += lastcost;
 
-        // minimum possible cost is for the closed loop
-        int minimumcost = traversedcost + dist(nextpos, 0);
+        // solve
+        solve();
 
-        // don't traverse if minimum possible cost is bigger than bestcost
-        if (minimumcost < bestcost) {
-            // move as traversed
-            traversed.push_back(nextpos);
-            available.remove(nextpos);
-            // solve
-            solve();
-            // restore
-            available.push_back(nextpos);
-            traversed.pop_back();
-        }
-
-        // undo traverse cost
+        // restore
+        available.push_back(nextpos);
+        traversed.pop_back();
         traversedcost -= lastcost;
     }
 }
