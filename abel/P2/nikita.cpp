@@ -9,6 +9,7 @@
 #include <stack>
 #include <list>
 #include <cstring>
+#include <map>
 
 using namespace std;
 
@@ -70,6 +71,7 @@ void solve() {
 
     // sort by closest
     sort(sort_available, sort_available + i);
+    int worst = traversedcost + sort_available[i - 1].first;
 
     // traverse elements
     for (auto &nextpos_ : sort_available) {
@@ -77,7 +79,7 @@ void solve() {
         // early cut: if worst distance is less than best, cut all remaining
         // repeat each time because bestcost may be updated
         // no need for another local cut
-        if (traversedcost + sort_available[i - 1].first >= bestcost) break;
+        if (worst >= bestcost) break;
 
         int nextpos = nextpos_.second;
 
@@ -126,6 +128,9 @@ void executeFile(const string &filenameIn, const string &filenameOut) {
     // read N
     data >> N;
 
+    map<int, float> n_seconds;
+    map<int, int> n_tests;
+
     for (int n = 0; n < N; ++n) {
         int pos_x, pos_y;
         // foreach scenario
@@ -167,9 +172,21 @@ void executeFile(const string &filenameIn, const string &filenameOut) {
         // execute
         float seconds = (float) Measure([] { solve(); });
 
-        cout << n + 1 << '/' << N << " : " << bestcost << ' ' << seconds << endl;
+        cout << n + 1 << '/' << N << ", n=" << positions_x.size() << " : " << bestcost << ' ' << seconds << endl;
         solution << bestcost << ' ' << seconds << endl;
 
+        // update time
+        n_seconds[positions_x.size()] += seconds;
+        ++n_tests[positions_x.size()];
+
+    }
+
+    // print info
+    cout << "Statistics:" << endl;
+    for (auto values : n_seconds) {
+        cout << "n=" << values.first << " :"
+             << " tests=" << n_tests[values.first]
+             << " average=" << values.second / n_tests[values.first] << endl;
     }
 }
 
@@ -187,7 +204,7 @@ void executeInternal() {
 
         // initialize n data
         float seconds = 0;
-        int TESTS = 10;
+        int TESTS = 50;
 
         // execute several tests (for average)
         for (int t = 0; t < TESTS; ++t) {
@@ -206,10 +223,12 @@ void executeInternal() {
             prepare();
 
             // execute
+            cout << "<" << flush;
             seconds += (float) Measure([] { solve(); });
+            cout << ">" << flush;
 
         }
-        cout << "n=" << n << " seconds=" << seconds / (float) TESTS << endl;
+        cout << " n=" << n << " seconds=" << seconds / (float) TESTS << endl;
     }
 }
 
