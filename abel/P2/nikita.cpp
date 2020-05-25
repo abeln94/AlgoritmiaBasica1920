@@ -262,17 +262,23 @@ int main(int argc, char *argv[]) {
         // test
         executeFile("prueba.txt", "sol_prueba.txt");
         compare("sol_prueba.txt", "teacher_sol_prueba.txt");
+        return 0;
     }
 
     if (argc == 2 && strcmp(argv[1], "500") == 0) {
         // test_500
         executeFile("test_500_15.txt", "sol_test_500_15.txt");
+        return 0;
     }
 
     if (argc == 2 && strcmp(argv[1], "range") == 0) {
         // several tests
         executeInternal();
+        return 0;
     }
+
+    cout << "Usage: " << argv[0] << " <input_file> <output_file>" << endl
+         << "       " << argv[0] << "testname" << endl;
 
 
     return 0;
