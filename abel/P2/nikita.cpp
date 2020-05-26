@@ -32,8 +32,6 @@ float Measure(const function<void()> &action) {
 
 // -------------------- ALGORITHM --------------------
 
-
-int N;
 vector<int> positions_x, positions_y;
 list<int> available, traversed;
 int bestcost, traversedcost;
@@ -48,7 +46,8 @@ int dist(int from, int to) {
 /**
  * Solve step
  */
-void solve() {
+void solve_step() {
+
     if (available.empty()) {
         // solution, update best cost
         int localcost = traversedcost + dist(traversed.back(), 0);
@@ -92,7 +91,7 @@ void solve() {
         traversedcost += lastcost;
 
         // solve
-        solve();
+        solve_step();
 
         // restore
         available.push_back(nextpos);
@@ -101,17 +100,32 @@ void solve() {
     }
 }
 
-void prepare() {
-    bestcost = INT32_MAX;
+/**
+ * Starts the solving process
+ */
+void solve() {
 
+    // initialize variables
+    bestcost = INT32_MAX;
+    traversedcost = 0;
+
+    // initialize vectors
     traversed.clear();
     traversed.push_back(0);
     available.clear();
     for (int i = 1; i < positions_x.size(); ++i) available.push_back(i);
-    traversedcost = 0;
+
+    // run
+    solve_step();
 }
 
+/**
+ * Runs the algorithm for the provided file, writes results to a new file
+ * @param filenameIn name of the input file
+ * @param filenameOut name for the output file
+ */
 void executeFile(const string &filenameIn, const string &filenameOut) {
+
     // prepare files
     ifstream data(filenameIn);
     if (!data.is_open()) {
@@ -126,17 +140,18 @@ void executeFile(const string &filenameIn, const string &filenameOut) {
     }
 
     // read N
+    int N;
     data >> N;
 
+    // for statistics
     map<int, float> n_seconds;
     map<int, int> n_tests;
 
     for (int n = 0; n < N; ++n) {
-        int pos_x, pos_y;
         // foreach scenario
 
         // read elements
-        int A, B, M;
+        int A, B, pos_x, pos_y, M;
         data >> A >> B
              >> pos_x >> pos_y
              >> M;
@@ -167,21 +182,20 @@ void executeFile(const string &filenameIn, const string &filenameOut) {
             }
         }
 
-        prepare();
-
         // execute
         float seconds = (float) Measure([] { solve(); });
 
+        // write results
         cout << n + 1 << '/' << N << ", n=" << positions_x.size() << " : " << bestcost << ' ' << seconds << endl;
         solution << bestcost << ' ' << seconds << endl;
 
-        // update time
+        // update statistics
         n_seconds[positions_x.size()] += seconds;
         ++n_tests[positions_x.size()];
 
     }
 
-    // print info
+    // print statistics
     cout << "Statistics:" << endl;
     for (auto values : n_seconds) {
         cout << "n=" << values.first << " :"
@@ -190,21 +204,25 @@ void executeFile(const string &filenameIn, const string &filenameOut) {
     }
 }
 
+/**
+ * Runs multiple random tests
+ */
 void executeInternal() {
 
-    // fixed length (it is not used per se)
-    N = 20;
+    int N = 20; // arbitrary size of the board
+    int n_start = 2; // minimum value of N to test
+    int n_end = 20; // maximum value of N to test
+    int TESTS = 50; // number of tests per N
 
     // initialize an array with all possible positions, for random pick
     int values[N * N];
-    for (int n = 0; n < N; ++n) values[n] = n;
+    for (int n = 0; n < N * N; ++n) values[n] = n;
 
     // execute for different number of positions
-    for (int n = 2; n < 20; ++n) {
+    for (int n = n_start; n <= n_end; ++n) {
 
         // initialize n data
         float seconds = 0;
-        int TESTS = 50;
 
         // execute several tests (for average)
         for (int t = 0; t < TESTS; ++t) {
@@ -213,14 +231,12 @@ void executeInternal() {
             positions_x.clear();
             positions_y.clear();
 
-            // add n random positions
+            // pick n random positions
             shuffle(values, values + (N * N), default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
             for (int p = 0; p < n; ++p) {
                 positions_x.push_back(values[p] / N);
                 positions_y.push_back(values[p] % N);
             }
-
-            prepare();
 
             // execute
             cout << "<" << flush;
@@ -232,6 +248,11 @@ void executeInternal() {
     }
 }
 
+/**
+ * Compares the results of two executions
+ * @param filenameOur name of the file to check
+ * @param filenameBase name of the file to use as a base
+ */
 void compare(const string &filenameOur, const string &filenameBase) {
 
     // prepare files
@@ -247,6 +268,7 @@ void compare(const string &filenameOur, const string &filenameBase) {
         return;
     }
 
+    // read each result
     int our_sol, base_sol;
     float our_time, base_time;
     while (our >> our_sol >> our_time) {
@@ -259,11 +281,12 @@ void compare(const string &filenameOur, const string &filenameBase) {
         } else {
             cout << "VALID SOLUTION of " << base_sol << endl;
         }
-
     }
-
 }
 
+/**
+ * MAIN
+ */
 int main(int argc, char *argv[]) {
 
 #ifdef USING_DEBUG
@@ -273,32 +296,39 @@ int main(int argc, char *argv[]) {
 #endif
 
     if (argc == 3) {
+        // three arguments: execute file
         executeFile(argv[1], argv[2]);
         return 0;
     }
 
-    if (argc == 2 && strcmp(argv[1], "prueba") == 0) {
-        // test
-        executeFile("prueba.txt", "sol_prueba.txt");
-        compare("sol_prueba.txt", "teacher_sol_prueba.txt");
-        return 0;
-    }
+    if (argc == 2) {
+        // two arguments: execute command
 
-    if (argc == 2 && strcmp(argv[1], "500") == 0) {
+        // teacher prueba
+        if (strcmp(argv[1], "prueba") == 0) {
+            executeFile("prueba.txt", "sol_prueba.txt");
+            compare("sol_prueba.txt", "teacher_sol_prueba.txt");
+            return 0;
+        }
+
         // test_500
-        executeFile("test_500_15.txt", "sol_test_500_15.txt");
-        return 0;
-    }
+        if (strcmp(argv[1], "500") == 0) {
+            executeFile("test_500_15.txt", "sol_test_500_15.txt");
+            return 0;
+        }
 
-    if (argc == 2 && strcmp(argv[1], "range") == 0) {
         // several tests
-        executeInternal();
-        return 0;
+        if (strcmp(argv[1], "range") == 0) {
+            executeInternal();
+            return 0;
+        }
+
+        cout << "Invalid command: " << argv[1] << endl;
     }
 
+    // invalid usage
     cout << "Usage: " << argv[0] << " <input_file> <output_file>" << endl
-         << "       " << argv[0] << "testname" << endl;
-
+         << "       " << argv[0] << "command" << endl;
 
     return 0;
 }
