@@ -8,7 +8,7 @@ SERVER=a544125@hendrix.cps.unizar.es
 REMOTE_FOLDER='~/.remoteCompiler/'
 UPLOAD_FILES="Makefile *.cpp *.txt"
 DOWNLOAD_FILES="*.txt"
-RUNNABLE="./nikita 500"
+RUNNABLE="./nikita range"
 
 # error as soon as possible
 set -e

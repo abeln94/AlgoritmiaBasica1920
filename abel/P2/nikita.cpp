@@ -35,13 +35,7 @@ float Measure(const function<void()> &action) {
 vector<int> positions_x, positions_y;
 list<int> available, traversed;
 int bestcost, traversedcost;
-
-/**
- * Distance between two positions
- */
-int dist(int from, int to) {
-    return abs(positions_x[from] - positions_x[to]) + abs(positions_y[from] - positions_y[to]);
-}
+vector<vector<int>> distances;
 
 /**
  * Solve step
@@ -50,7 +44,8 @@ void solve_step() {
 
     if (available.empty()) {
         // solution, update best cost
-        int localcost = traversedcost + dist(traversed.back(), 0);
+        int from = traversed.back();
+        int localcost = traversedcost + distances[from][0];
         if (localcost < bestcost) {
             bestcost = localcost;
         }
@@ -65,7 +60,7 @@ void solve_step() {
     pair<int, int> sort_available[available.size()];
     int i = 0;
     for (int &nextpos : available) {
-        sort_available[i++] = make_pair(dist(last, nextpos) + dist(nextpos, 0), nextpos);
+        sort_available[i++] = make_pair(distances[last][nextpos] + distances[nextpos][0], nextpos);
     }
 
     // sort by closest
@@ -82,7 +77,7 @@ void solve_step() {
 
         int nextpos = nextpos_.second;
 
-        int lastcost = dist(last, nextpos);
+        int lastcost = distances[last][nextpos];
 
 
         // move as traversed
@@ -114,6 +109,15 @@ void solve() {
     traversed.push_back(0);
     available.clear();
     for (int i = 1; i < positions_x.size(); ++i) available.push_back(i);
+
+    // initialize distances
+    distances = vector<vector<int>>(positions_x.size());
+    for (int i = 0; i < positions_x.size(); ++i) {
+        distances[i] = vector<int>(positions_x.size());
+        for (int j = 0; j < positions_x.size(); ++j) {
+            distances[i][j] = abs(positions_x[i] - positions_x[j]) + abs(positions_y[i] - positions_y[j]);
+        }
+    }
 
     // run
     solve_step();
