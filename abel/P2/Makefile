@@ -8,7 +8,7 @@ CC = g++         # compiler
 EJEC = nikita
 #---------------------------------------------------------
 # Flags
-CPPFLAGS=-I. -std=c++11 -fmax-errors=1 -Ofast -pthread -ftracer -funroll-loops # opciones compilación
+CPPFLAGS=-I. -std=c++11 -fmax-errors=1 -Ofast -ftracer -funroll-loops # opciones compilación
 #---------------------------------------------------------
 
 all: ${EJEC} #lo que se generará al ejecutar "make"
